@@ -10,8 +10,11 @@ Version:             0.1.0
 Synopsis:            Memoization monad transformer
 
 -- A longer description of the package.
-Description:          Memoization monad transformer supporting mutual recursive function definitions
-		      and most of the standard monad transformers        
+Description:        Memoization monad transformer supporting mutual recursive function definitions
+		    and most of the standard monad transformers        
+
+-- URL for the project homepage or repository.
+Homepage:         http://code.google.com/p/monad-memo
 
 -- The license under which the package is released.
 License:             BSD3
@@ -43,12 +46,21 @@ Cabal-version:       >=1.2
 
 Library
   -- Modules exported by the library.
-  Exposed-modules:     Control.Monad.Memo, Control.Monad.Memo.Class, Control.Monad.Trans.Memo.Strict
-  --                     Control.Monad.Memo.Example.Memo
-  --                     Test.Main
+  Exposed-modules:
+     Control.Monad.Memo,
+     Control.Monad.Memo.Class,
+     Control.Monad.Trans.Memo.Strict
   
   -- Packages needed in order to build this package.
-  Build-depends:       base >= 3.0 && < 5, mtl >= 2.0, transformers >= 0.2, containers >= 0.3, random >= 1.0, QuickCheck >= 2.0       
+  Build-depends:
+     base >= 3.0 && < 5,
+     mtl >= 2.0,
+     transformers >= 0.2,
+
+     containers >= 0.3,
+
+     random >= 1.0,
+     QuickCheck >= 2.0       
   
   -- Modules not exported by this package.
   Other-modules:

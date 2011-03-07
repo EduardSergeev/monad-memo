@@ -9,7 +9,9 @@ Portability :  non-portable (multi-param classes, functional dependencies)
 
 [Computation type:] Monadic computations with support for memoization.
 
+Defines monadic interface 'MonadMemo' for memoization and simple implementation 'MemoT' (based on 'Data.Map')
 -}
+
 
 module Control.Monad.Memo (
     -- * MonadMemo class
@@ -66,7 +68,7 @@ Here is simple non-monadic definition of it
 >fib 1 = 1
 >fib n = fib (n-1) + fib (n-2)
 
-To use @Memo@ monad we need to convert it into monadic form:
+To use 'Memo' monad we need to convert it into monadic form:
 
 >fibm :: (Num n, Monad m) => n -> m n
 >fibm 0 = return 0
@@ -76,7 +78,7 @@ To use @Memo@ monad we need to convert it into monadic form:
 >  n2 <- fibm (n-2)
 >  return (n1+n2)
 
-Then we can specify which computation we want to memoize with @memo@ (both recursive calls to (n-1) and (n-2)):
+Then we can specify which computation we want to memoize with 'memo' (both recursive calls to (n-1) and (n-2)):
 
 >fibm :: (Num n, Ord n) => n -> Memo n n n
 >fibm 0 = return 0
@@ -86,9 +88,9 @@ Then we can specify which computation we want to memoize with @memo@ (both recur
 >  n2 <- fibm `memo` (n-2)
 >  return (n1+n2)
 
-NB: @Ord@ is required since internaly Memo implementation uses @Data.Map@ to store and lookup memoized values
+NB: 'Ord' is required since internaly Memo implementation uses 'Data.Map' to store and lookup memoized values
 
-Then it can be run with @startEvalMemo@
+Then it can be run with 'startEvalMemo'
 
 >startEvalMemo . fibm $ 5
 
