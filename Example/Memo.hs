@@ -13,7 +13,7 @@ Samples of usage of MemoT
 
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Sample.Memo
+module Example.Memo
     (
          -- * Memoized Fibonacci number function
          fibm,

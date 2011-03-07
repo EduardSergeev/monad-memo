@@ -43,15 +43,17 @@ Cabal-version:       >=1.2
 
 Library
   -- Modules exported by the library.
-  Exposed-modules:     Sample.Memo, Control.Monad.Memo,
-                       Control.Monad.Memo.Class, Control.Monad.Trans.Memo.Strict
+  Exposed-modules:     Control.Monad.Memo, Control.Monad.Memo.Class, Control.Monad.Trans.Memo.Strict
+  --                     Control.Monad.Memo.Example.Memo
   --                     Test.Main
   
   -- Packages needed in order to build this package.
   Build-depends:       base >= 3.0 && < 5, mtl >= 2.0, transformers >= 0.2, containers >= 0.3, random >= 1.0, QuickCheck >= 2.0       
   
   -- Modules not exported by this package.
-  Other-modules:       Test.Main      
+  Other-modules:
+    Test.Main
+    Example.Memo
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         
