@@ -1,0 +1,1726 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--Rendered using the Haskell Html Library v0.2-->
+<HTML
+><HEAD
+><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"
+><TITLE
+>Sample.Memo</TITLE
+><LINK HREF="haddock.css" REL="stylesheet" TYPE="text/css"
+><SCRIPT SRC="haddock-util.js" TYPE="text/javascript"
+></SCRIPT
+><SCRIPT TYPE="text/javascript"
+>window.onload = function () {setSynopsis("mini_Sample-Memo.html")};</SCRIPT
+></HEAD
+><BODY
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="topbar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><IMG SRC="haskell_icon.gif" WIDTH="16" HEIGHT="16" ALT=" "
+></TD
+><TD CLASS="title"
+>monad-memo-0.1.0: Memoization monad transformer</TD
+><TD CLASS="topbut"
+><A HREF="index.html"
+>Contents</A
+></TD
+><TD CLASS="topbut"
+><A HREF="doc-index.html"
+>Index</A
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="modulebar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><FONT SIZE="6"
+>Sample.Memo</FONT
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+><B
+>Contents</B
+></TD
+></TR
+><TR
+><TD
+><DL
+><DT
+><A HREF="#1"
+>Memoized Fibonacci number function
+</A
+></DT
+><DT
+><A HREF="#2"
+>Combining ListT and MemoT transformers 
+</A
+></DT
+><DD
+><DL
+><DT
+><A HREF="#3"
+>Non-memoized original definition
+</A
+></DT
+><DT
+><A HREF="#4"
+>Memoized definition
+</A
+></DT
+></DL
+></DD
+><DT
+><A HREF="#5"
+>Mutualy recursive function definitions
+</A
+></DT
+><DD
+><DL
+><DT
+><A HREF="#6"
+>Non-memoized original definition
+</A
+></DT
+><DT
+><A HREF="#7"
+>Memoized definition
+</A
+></DT
+></DL
+></DD
+><DT
+><A HREF="#8"
+>Fibonacci with mutual recursive addition
+</A
+></DT
+><DT
+><A HREF="#9"
+>Fibonacci with Memo and Writer
+</A
+></DT
+><DT
+><A HREF="#10"
+>Fibonacci with MonadMemo and MonadCont
+</A
+></DT
+><DT
+><A HREF="#11"
+>Tribonacci with constant factor through Reader plus memoization via Memo
+</A
+></DT
+><DT
+><A HREF="#12"
+>Ackerman function
+</A
+></DT
+></DL
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+>Synopsis</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afibm"
+>fibm</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> n, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> n) =&gt; n -&gt; <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> n n n</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFibm"
+>evalFibm</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> a, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> a) =&gt; a -&gt; a</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3ATree"
+>Tree</A
+> a </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+>= <A HREF="#v%3ALeaf"
+>Leaf</A
+> !a</TD
+></TR
+><TR
+><TD CLASS="decl"
+>| <A HREF="#v%3AFork"
+>Fork</A
+> !(<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a) !(<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a)</TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afringe"
+>fringe</A
+> ::  <A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a -&gt; [a]</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Aunfringe"
+>unfringe</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t =&gt; [t] -&gt; [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Aunfringem"
+>unfringem</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t) =&gt; [t] -&gt; ListT (<A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> [t] [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]) (<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalUnfringem"
+>evalUnfringem</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t) =&gt; [t] -&gt; [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Af"
+>f</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Ag"
+>g</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoF"
+>MemoF</A
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoG"
+>MemoG</A
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoFG"
+>MemoFG</A
+> = <A HREF="Sample-Memo.html#t%3AMemoF"
+>MemoF</A
+> (<A HREF="Sample-Memo.html#t%3AMemoG"
+>MemoG</A
+> Identity)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afm"
+>fm</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFG"
+>MemoFG</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Agm"
+>gm</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="Sample-Memo.html#t%3AMemoFG"
+>MemoFG</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFm"
+>evalFm</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalGm"
+>evalGm</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoFib"
+>MemoFib</A
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoBoo"
+>MemoBoo</A
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ADouble"
+>Double</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AMemoFB"
+>MemoFB</A
+> = <A HREF="Sample-Memo.html#t%3AMemoFib"
+>MemoFib</A
+> (<A HREF="Sample-Memo.html#t%3AMemoBoo"
+>MemoBoo</A
+> Identity)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Aboo"
+>boo</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ADouble"
+>Double</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFB"
+>MemoFB</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afibm2"
+>fibm2</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFB"
+>MemoFB</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFibM2"
+>evalFibM2</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afibmw"
+>fibmw</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; WriterT <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+> (<A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFibmw"
+>evalFibmw</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afibmc"
+>fibmc</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> b, MonadCont m, <A HREF="Control-Monad-Memo-Class.html#t%3AMonadMemo"
+>MonadMemo</A
+> t b m) =&gt; t -&gt; m b</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFibmc"
+>evalFibmc</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Afibmr"
+>fibmr</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> a, <A HREF="Control-Monad-Memo-Class.html#t%3AMonadMemo"
+>MonadMemo</A
+> t a m, MonadReader a m) =&gt; t -&gt; m a</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalFibmr"
+>evalFibmr</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Aack"
+>ack</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3Aackm"
+>ackm</A
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>) -&gt; <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="#v%3AevalAckm"
+>evalAckm</A
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="1"
+><A NAME="1"
+>Memoized Fibonacci number function
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fibm"
+><A NAME="v%3Afibm"
+></A
+></A
+><B
+>fibm</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> n, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> n) =&gt; n -&gt; <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> n n n</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFibm"
+><A NAME="v%3AevalFibm"
+></A
+></A
+><B
+>evalFibm</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> a, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> a) =&gt; a -&gt; a</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="2"
+><A NAME="2"
+>Combining ListT and MemoT transformers 
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+>Original sample is taken from: &quot;Monadic Memoization Mixins&quot; by Daniel Brown and William R. Cook <A HREF="http://www.cs.utexas.edu/~wcook/Drafts/2006/MemoMixins.pdf"
+>http://www.cs.utexas.edu/~wcook/Drafts/2006/MemoMixins.pdf</A
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section3"
+><A NAME="3"
+><A NAME="3"
+>Non-memoized original definition
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:Tree"
+><A NAME="t%3ATree"
+></A
+></A
+><B
+>Tree</B
+> a </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:Leaf"
+><A NAME="v%3ALeaf"
+></A
+></A
+><B
+>Leaf</B
+> !a</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+><TR
+><TD CLASS="arg"
+><A NAME="v:Fork"
+><A NAME="v%3AFork"
+></A
+></A
+><B
+>Fork</B
+> !(<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a) !(<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a)</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:Tree')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:Tree" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Eq.html#t%3AEq"
+>Eq</A
+> a =&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Eq.html#t%3AEq"
+>Eq</A
+> (<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a)</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> a =&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> (<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a)</TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fringe"
+><A NAME="v%3Afringe"
+></A
+></A
+><B
+>fringe</B
+> ::  <A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> a -&gt; [a]</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:unfringe"
+><A NAME="v%3Aunfringe"
+></A
+></A
+><B
+>unfringe</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t =&gt; [t] -&gt; [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Non-memoized version (Uses ListT monad - returns a list of <TT
+><A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+></TT
+>)
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section3"
+><A NAME="4"
+><A NAME="4"
+>Memoized definition
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:unfringem"
+><A NAME="v%3Aunfringem"
+></A
+></A
+><B
+>unfringem</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t) =&gt; [t] -&gt; ListT (<A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> [t] [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]) (<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t)</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Mixes memoization with ListT monad:
+ memoizes the result as list of <TT
+><A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+></TT
+> (e.g. <TT
+>k :: [t]</TT
+>, <TT
+>v :: [Tree t]</TT
+>)
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalUnfringem"
+><A NAME="v%3AevalUnfringem"
+></A
+></A
+><B
+>evalUnfringem</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Ord.html#t%3AOrd"
+>Ord</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Text-Show.html#t%3AShow"
+>Show</A
+> t) =&gt; [t] -&gt; [<A HREF="Sample-Memo.html#t%3ATree"
+>Tree</A
+> t]</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="5"
+><A NAME="5"
+>Mutualy recursive function definitions
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+>Original sample is taken from: &quot;Monadic Memoization Mixins&quot; by Daniel Brown and William R. Cook <A HREF="http://www.cs.utexas.edu/~wcook/Drafts/2006/MemoMixins.pdf"
+>http://www.cs.utexas.edu/~wcook/Drafts/2006/MemoMixins.pdf</A
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section3"
+><A NAME="6"
+><A NAME="6"
+>Non-memoized original definition
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:f"
+><A NAME="v%3Af"
+></A
+></A
+><B
+>f</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="doc"
+><TT
+><A HREF="Sample-Memo.html#v%3Af"
+>f</A
+></TT
+> depends on <TT
+><A HREF="Sample-Memo.html#v%3Ag"
+>g</A
+></TT
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:g"
+><A NAME="v%3Ag"
+></A
+></A
+><B
+>g</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+><TT
+><A HREF="Sample-Memo.html#v%3Ag"
+>g</A
+></TT
+> depends on <TT
+><A HREF="Sample-Memo.html#v%3Af"
+>f</A
+></TT
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section3"
+><A NAME="7"
+><A NAME="7"
+>Memoized definition
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoF"
+><A NAME="t%3AMemoF"
+></A
+></A
+><B
+>MemoF</B
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Memo-cache for <TT
+><A HREF="Sample-Memo.html#v%3Afm"
+>fm</A
+></TT
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoG"
+><A NAME="t%3AMemoG"
+></A
+></A
+><B
+>MemoG</B
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+>Memo-cache for <TT
+><A HREF="Sample-Memo.html#v%3Agm"
+>gm</A
+></TT
+>
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoFG"
+><A NAME="t%3AMemoFG"
+></A
+></A
+><B
+>MemoFG</B
+> = <A HREF="Sample-Memo.html#t%3AMemoF"
+>MemoF</A
+> (<A HREF="Sample-Memo.html#t%3AMemoG"
+>MemoG</A
+> Identity)</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Combined stack of caches (transformers)
+ Stacks two <TT
+><A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+></TT
+> transformers in one monad to be used in both <TT
+><A HREF="Sample-Memo.html#v%3Agm"
+>gm</A
+></TT
+> and <TT
+><A HREF="Sample-Memo.html#v%3Afm"
+>fm</A
+></TT
+> monadic functions
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fm"
+><A NAME="v%3Afm"
+></A
+></A
+><B
+>fm</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFG"
+>MemoFG</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:gm"
+><A NAME="v%3Agm"
+></A
+></A
+><B
+>gm</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="Sample-Memo.html#t%3AMemoFG"
+>MemoFG</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFm"
+><A NAME="v%3AevalFm"
+></A
+></A
+><B
+>evalFm</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Function to run <TT
+><A HREF="Sample-Memo.html#v%3Afm"
+>fm</A
+></TT
+> computation
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalGm"
+><A NAME="v%3AevalGm"
+></A
+></A
+><B
+>evalGm</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+>) -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Int.html#t%3AInt"
+>Int</A
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+>Function to run <TT
+><A HREF="Sample-Memo.html#v%3Agm"
+>gm</A
+></TT
+> computation
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="8"
+><A NAME="8"
+>Fibonacci with mutual recursive addition
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoFib"
+><A NAME="t%3AMemoFib"
+></A
+></A
+><B
+>MemoFib</B
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoBoo"
+><A NAME="t%3AMemoBoo"
+></A
+></A
+><B
+>MemoBoo</B
+> = <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemoT"
+>MemoT</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ADouble"
+>Double</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:MemoFB"
+><A NAME="t%3AMemoFB"
+></A
+></A
+><B
+>MemoFB</B
+> = <A HREF="Sample-Memo.html#t%3AMemoFib"
+>MemoFib</A
+> (<A HREF="Sample-Memo.html#t%3AMemoBoo"
+>MemoBoo</A
+> Identity)</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:boo"
+><A NAME="v%3Aboo"
+></A
+></A
+><B
+>boo</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ADouble"
+>Double</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFB"
+>MemoFB</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fibm2"
+><A NAME="v%3Afibm2"
+></A
+></A
+><B
+>fibm2</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="Sample-Memo.html#t%3AMemoFB"
+>MemoFB</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFibM2"
+><A NAME="v%3AevalFibM2"
+></A
+></A
+><B
+>evalFibM2</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="9"
+><A NAME="9"
+>Fibonacci with Memo and Writer
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fibmw"
+><A NAME="v%3Afibmw"
+></A
+></A
+><B
+>fibmw</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; WriterT <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+> (<A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="doc"
+>Here we use monomorphic type
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFibmw"
+><A NAME="v%3AevalFibmw"
+></A
+></A
+><B
+>evalFibmw</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Data-Char.html#t%3AString"
+>String</A
+>)</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="10"
+><A NAME="10"
+>Fibonacci with MonadMemo and MonadCont
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fibmc"
+><A NAME="v%3Afibmc"
+></A
+></A
+><B
+>fibmc</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> b, MonadCont m, <A HREF="Control-Monad-Memo-Class.html#t%3AMonadMemo"
+>MonadMemo</A
+> t b m) =&gt; t -&gt; m b</TD
+></TR
+><TR
+><TD CLASS="doc"
+>Can also be defined with polymorphic monad classes
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFibmc"
+><A NAME="v%3AevalFibmc"
+></A
+></A
+><B
+>evalFibmc</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="11"
+><A NAME="11"
+>Tribonacci with constant factor through Reader plus memoization via Memo
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:fibmr"
+><A NAME="v%3Afibmr"
+></A
+></A
+><B
+>fibmr</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> t, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3ANum"
+>Num</A
+> a, <A HREF="Control-Monad-Memo-Class.html#t%3AMonadMemo"
+>MonadMemo</A
+> t a m, MonadReader a m) =&gt; t -&gt; m a</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalFibmr"
+><A NAME="v%3AevalFibmr"
+></A
+></A
+><B
+>evalFibmr</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="12"
+><A NAME="12"
+>Ackerman function
+</A
+></A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:ack"
+><A NAME="v%3Aack"
+></A
+></A
+><B
+>ack</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:ackm"
+><A NAME="v%3Aackm"
+></A
+></A
+><B
+>ackm</B
+> :: (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>) -&gt; <A HREF="Control-Monad-Trans-Memo-Strict.html#t%3AMemo"
+>Memo</A
+> (<A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>, <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+>) <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:evalAckm"
+><A NAME="v%3AevalAckm"
+></A
+></A
+><B
+>evalAckm</B
+> :: <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+> -&gt; <A HREF="/Library/Frameworks/GHC.framework/Versions/612/usr/share/doc/ghc/html/libraries/base-4.2.0.2/Prelude.html#t%3AInteger"
+>Integer</A
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="botbar"
+>Produced by <A HREF="http://www.haskell.org/haddock/"
+>Haddock</A
+> version 2.6.1</TD
+></TR
+></TABLE
+></BODY
+></HTML
+>

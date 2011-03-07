@@ -1,0 +1,58 @@
+-- The name of the package.
+Name:                monad-memo
+
+-- The package version. See the Haskell package versioning policy
+-- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
+-- standards guiding when and how versions should be incremented.
+Version:             0.1.0
+
+-- A short (one-line) description of the package.
+Synopsis:            Memoization monad transformer
+
+-- A longer description of the package.
+Description:          Memoization monad transformer supporting mutual recursive function definitions
+		      and most of the standard monad transformers        
+
+-- The license under which the package is released.
+License:             BSD3
+
+-- The file containing the license text.
+License-file:        LICENSE
+
+-- The package author(s).
+Author:              Eduard Sergeev
+
+-- An email address to which users can send suggestions, bug reports,
+-- and patches.
+Maintainer:          Eduard.Sergeev@gmail.com
+
+-- A copyright notice.
+-- Copyright:           
+
+Category:            Control
+
+Build-type:          Simple
+
+-- Extra files to be distributed with the package, such as examples or
+-- a README.
+-- Extra-source-files:  
+
+-- Constraint on the version of Cabal needed to build this package.
+Cabal-version:       >=1.2
+
+
+Library
+  -- Modules exported by the library.
+  Exposed-modules:     Sample.Memo, Control.Monad.Memo,
+                       Control.Monad.Memo.Class, Control.Monad.Trans.Memo.Strict
+  --                     Test.Main
+  
+  -- Packages needed in order to build this package.
+  Build-depends:       base >= 3.0 && < 5, mtl >= 2.0, transformers >= 0.2, containers >= 0.3, random >= 1.0, QuickCheck >= 2.0       
+  
+  -- Modules not exported by this package.
+  Other-modules:       Test.Main      
+  
+  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
+  -- Build-tools:         
+  
