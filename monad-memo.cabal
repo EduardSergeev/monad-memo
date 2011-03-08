@@ -47,7 +47,7 @@ Flag test-suite
 
 Flag examples
   Description: Builds examples
-  Default:     True
+  Default:     False
 
 
 Library
@@ -72,4 +72,5 @@ Library
 
      random >= 1.0,
      QuickCheck >= 2.0       
+
   

@@ -115,17 +115,17 @@ Stacking them together gives us te overall type for our combined memoization mon
 >boo :: Double -> MemoFB String
 >boo 0 = "boo: 0" `trace` return ""
 >boo n = ("boo: " ++ show n) `trace` do
->  n1 <- boo `memol1` (n-1)         -- uses next in stack transformer (memol_1_): MemoBoo is nested in MemoFib
->  f <- fibm2 `memol0` floor (n-1)  -- uses current transformer (memol_0_): MemoFib
->  return (show n ++ show f)
+>  n1 <- boo `memol1` (n-1)           -- uses next in stack transformer (memol_1_): MemoBoo is nested in MemoFib
+>  fn <- fibm2 `memol0` floor (n-1)   -- uses current transformer (memol_0_): MemoFib
+>  return (show fn ++ n1)
 
 >fibm2 :: Integer -> MemoFB Integer 
 >fibm2 0 = "fib: 0" `trace` return 0
 >fibm2 1 = "fib: 1" `trace` return 1
 >fibm2 n = ("fib: " ++ show n) `trace` do
->  l <- boo `memol1` fromInteger n  -- as in 'boo' we need to use 1st nested transformer here
->  f1 <- fibm2 `memol0` (n-1)       -- as in 'boo' we need to use 1st nested transformer here
->  f2 <- fibm2 `memol0` (n-2)       --
+>  l <- boo `memol1` fromInteger n   -- as in 'boo' we need to use 1st nested transformer here
+>  f1 <- fibm2 `memol0` (n-1)        -- and 0st (the current) for fibm2
+>  f2 <- fibm2 `memol0` (n-2)
 >  return (f1 + f2 + floor (read l))
 
 >evalFibM2 = startEvalMemo . startEvalMemoT . fibm2

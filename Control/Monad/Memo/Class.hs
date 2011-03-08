@@ -120,6 +120,7 @@ memol4
       Monad (t2 (t3 (t4 m))),
       Monad (t1 (t2 (t3 (t4 m)))) ) =>
      (k -> t1 (t2 (t3 (t4 m))) v) -> k -> t1 (t2 (t3 (t4 m))) v
+--memol4 :: (MonadTrans t4, MonadCache k v m, Monad (t1 (t2 (t3 (t4 m))))) =>  (k -> t1 (t2 (t3 (t4 m))) v) -> k -> t1 (t2 (t3 (t4 m))) v
 memol4 = memoln (lift.lift.lift.lift) id
 
 
