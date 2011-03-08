@@ -52,7 +52,7 @@ import Control.Monad.Memo.Class
 
 import Control.Monad.Trans.Memo.Strict (
     MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
-    Memo(..), runMemo, startRunMemo, evalMemo, startEvalMemo )
+    Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
 
 import Control.Monad.Trans
 import Control.Monad

@@ -1,11 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Test.Main where
+module Test.Main
+(
+       run
+) where
 
 import Test.QuickCheck
 import System.Random
-
-import Data.Char
 
 import Control.Monad.Memo
 import Control.Monad.Reader
@@ -54,6 +55,7 @@ fibmr n = do
 
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
 
+prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_ReaderEqv r n =
     ((`runReader`(toInt r)) . fibr  $ (toInt n)) == (startEvalMemo . (`runReaderT`(toInt r)) . fibmr $ (toInt n))
 
@@ -75,6 +77,7 @@ fibmw n = do
   tell $ show n
   return (f1+f2)
 
+prop_WriterEqv :: SmallInt Int  -> Bool
 prop_WriterEqv n =
     (runWriter . fibw . toInt $ n) == (startEvalMemo . runWriterT . fibmw . toInt $ n)
 
@@ -96,6 +99,7 @@ fibmc n = do
           if n == 4 then break 42 else fibmc `memo` (n-2)
   return (f1+f2)
 
+prop_ContEqv :: SmallInt Int -> Bool
 prop_ContEqv n =
     ((`runCont`id) . fibc . toInt $ n) == (startEvalMemo . (`runContT`return) . fibmc . toInt $ n)
 
@@ -120,6 +124,7 @@ fibms n = do
   modify $ \s -> s+1
   return (f1+f2+s)
 
+prop_StateEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_StateEqv s n =
     ((`runState`(toInt s)) . fibs . toInt $ n) == (startEvalMemo . (`runStateT`(toInt s)) . fibms . toInt $ n)
 
@@ -146,6 +151,7 @@ unfringem as = do
   u <- unfringem `memo` k
   return (Fork t u)
 
+prop_ListEqv :: SmallList Char -> Bool
 prop_ListEqv ls =
     unfringe (toList ls) == (startEvalMemo . runListT . unfringem $ (toList ls))
 
@@ -180,9 +186,12 @@ evalAll = startEvalMemo . startEvalMemoT
 evalFm = evalAll . fm
 evalGm = evalAll . gm
 
+
+prop_MutualFEqv :: SmallInt Int -> Bool
 prop_MutualFEqv sx  = f x == evalFm x
       where x = toInt sx
 
+prop_MutualGEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
       where
         x = toInt sx
@@ -190,15 +199,11 @@ prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
 
 
 
-
-
-type OneArg = SmallInt Int -> Bool
-type TwoArgs = SmallInt Int -> SmallInt Int -> Bool
-
-main = do
-  quickCheck (prop_ReaderEqv :: TwoArgs)
-  quickCheck (prop_WriterEqv :: OneArg)
-  quickCheck (prop_ContEqv :: OneArg)
-  quickCheck (prop_StateEqv :: TwoArgs)
-  quickCheck (prop_ListEqv :: SmallList Char -> Bool)
-  quickCheck (prop_MutualFEqv :: OneArg)
+run :: IO ()
+run = do
+  quickCheck prop_ReaderEqv
+  quickCheck prop_WriterEqv
+  quickCheck prop_ContEqv
+  quickCheck prop_StateEqv
+  quickCheck prop_ListEqv
+  quickCheck prop_MutualFEqv

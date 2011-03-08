@@ -1,2 +1,7 @@
 import Distribution.Simple
-main = defaultMain
+import Test.Main
+
+
+main = defaultMainWithHooks simpleUserHooks { runTests = runt }
+
+runt _ _ _ _ = run

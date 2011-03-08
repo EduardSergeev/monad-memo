@@ -79,8 +79,6 @@ import Control.Monad.List
 import Control.Monad.Cont
 import Control.Monad.Reader
 import Control.Monad.Writer
-import Control.Monad.State
-import Data.List
 
 import Debug.Trace
 
@@ -94,6 +92,7 @@ fibm n = do
   n2 <- fibm `memo` (n-2)
   return (n1+n2)
 
+evalFibm :: Integer -> Integer
 evalFibm = startEvalMemo . fibm
 
 
@@ -153,15 +152,15 @@ fm :: Int -> MemoFG (Int,String)
 fm 0 = return (1,"+")
 fm (n+1) = do
   fn <- fm `memol0` n
-  g <- gm `memol1` (n , fst fn)
-  return (g , "-" ++ snd fn)
+  gn <- gm `memol1` (n , fst fn)
+  return (gn , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
 gm (0,m) = return (m+1) 
 gm (n+1,m) = do
   fn <- fm `memol0` n
-  g <- gm `memol1` (n,m)
-  return $ fst fn - g
+  gn <- gm `memol1` (n,m)
+  return $ fst fn - gn
 
 evalAll = startEvalMemo . startEvalMemoT
 
@@ -184,8 +183,8 @@ boo :: Double -> MemoFB String
 boo 0 = "boo: 0" `trace` return ""
 boo n = ("boo: " ++ show n) `trace` do
   n1 <- boo `memol1` (n-1)
-  f <- fibm2 `memol0` floor (n-1)
-  return (show n ++ show f)
+  fn <- fibm2 `memol0` floor (n-1)
+  return (show fn ++ n1)
 
 fibm2 :: Integer -> MemoFB Integer 
 fibm2 0 = "fib: 0" `trace` return 0

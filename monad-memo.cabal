@@ -36,12 +36,18 @@ Category:            Control
 
 Build-type:          Simple
 
--- Extra files to be distributed with the package, such as examples or
--- a README.
--- Extra-source-files:  
 
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.2
+
+
+Flag test-suite
+  Description: Enable QuickCheck test suite run once package is built
+  Default:     False
+
+Flag examples
+  Description: Builds examples
+  Default:     True
 
 
 Library
@@ -50,6 +56,11 @@ Library
      Control.Monad.Memo,
      Control.Monad.Memo.Class,
      Control.Monad.Trans.Memo.Strict
+
+  if flag(test-suite)
+     Exposed-modules: Test.Main
+  if flag(examples)
+     Exposed-modules: Example.Memo
   
   -- Packages needed in order to build this package.
   Build-depends:
@@ -61,12 +72,4 @@ Library
 
      random >= 1.0,
      QuickCheck >= 2.0       
-  
-  -- Modules not exported by this package.
-  Other-modules:
-    Test.Main
-    Example.Memo
-  
-  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
-  -- Build-tools:         
   

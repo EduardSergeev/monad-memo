@@ -31,7 +31,6 @@ module Control.Monad.Memo.Class
 
 ) where
 
-import Prelude (undefined)
 import Data.Function
 import Data.Maybe
 import Data.Either
@@ -62,8 +61,8 @@ class Monad m => MonadMemo k v m | m -> k, m -> v where
 memoln :: (MonadCache k2 v m1, Monad m1, Monad m2) =>
            (forall a.m1 a -> m2 a) -> (k1 -> k2)  -> (k1 -> m2 v) -> k1 -> m2 v
 memoln fl fk f k = do
-  r <- fl $ lookup (fk k)
-  case r of
+  mr <- fl $ lookup (fk k)
+  case mr of
     Just r -> return r
     Nothing -> do
                 r <- f k
