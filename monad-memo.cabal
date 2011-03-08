@@ -58,9 +58,9 @@ Library
      Control.Monad.Trans.Memo.Strict
 
   if flag(test-suite)
-     Exposed-modules: Test.Main
+     Exposed-modules: Control.Monad.Memo.Test.Main
   if flag(examples)
-     Exposed-modules: Example.Memo
+     Exposed-modules: Control.Monad.Memo.Example.Main
   
   -- Packages needed in order to build this package.
   Build-depends:
