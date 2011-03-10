@@ -42,10 +42,6 @@ source-repository head
   type:		  svn
   location:	  http://monad-memo.googlecode.com/svn/trunk/
 
-Flag test-suite
-  description: Enable QuickCheck test suite run once package is built
-  default:     False
-
 Flag examples
   description: Builds examples
   default:     False
