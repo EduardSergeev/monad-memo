@@ -11,7 +11,7 @@ Samples of usage of MemoT
 
 -}
 
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Control.Monad.Memo.Example.Main
     (
@@ -84,7 +84,8 @@ import Debug.Trace
 
 
 
-fibm :: (Ord n, Num n) => n -> Memo n n n
+--fibm :: (Ord n, Num n) => n -> Memo n n n
+fibm :: (Num n, MonadMemo n n m) => n -> m n
 fibm 0 = return 0
 fibm 1 = return 1
 fibm n = do
@@ -132,12 +133,12 @@ evalUnfringem = startEvalMemo . runListT . unfringem
 -- | 'f' depends on 'g'
 f :: Int -> (Int,String)
 f 0 = (1,"+")
-f (n+1)	=(g(n,fst(f n)),"-" ++ snd(f n))
+f n = (g(n,fst(f (n-1))),"-" ++ snd(f (n-1)))
 
 -- | 'g' depends on 'f'
 g :: (Int, Int) -> Int
 g (0, m)  = m + 1
-g (n+1,m) = fst(f n)-g(n,m)
+g (n,m) = fst(f (n-1))-g((n-1),m)
 
 -- | Memo-cache for 'fm'
 type MemoF = MemoT Int (Int,String)
@@ -150,16 +151,16 @@ type MemoFG = MemoF (MemoG Identity)
 
 fm :: Int -> MemoFG (Int,String)
 fm 0 = return (1,"+")
-fm (n+1) = do
-  fn <- fm `memol0` n
-  gn <- gm `memol1` (n , fst fn)
+fm n = do
+  fn <- fm `memol0` (n-1)
+  gn <- gm `memol1` ((n-1) , fst fn)
   return (gn , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
 gm (0,m) = return (m+1) 
-gm (n+1,m) = do
-  fn <- fm `memol0` n
-  gn <- gm `memol1` (n,m)
+gm (n,m) = do
+  fn <- fm `memol0` (n-1)
+  gn <- gm `memol1` ((n-1),m)
   return $ fst fn - gn
 
 evalAll = startEvalMemo . startEvalMemoT
@@ -171,6 +172,8 @@ evalFm = evalAll . fm
 -- | Function to run 'gm' computation
 evalGm :: (Int,Int) -> Int
 evalGm = evalAll . gm
+
+
 
 
 
@@ -202,9 +205,10 @@ evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
 
 
 -- | Here we use monomorphic type
-fibmw :: Integer -> WriterT String (Memo Integer (Integer,String)) Integer
-fibmw 0 = "fib: 0" `trace` return 0
-fibmw 1 = "fib: 1" `trace` return 1
+--fibmw :: Integer -> WriterT String (Memo Integer (Integer,String)) Integer
+fibmw :: (Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
+fibmw 0 = "fib: 0" `trace` tell "0" >> return 0
+fibmw 1 = "fib: 1" `trace` tell "1" >> return 1
 fibmw n = ("fib: " ++ show n) `trace` do
   f1 <- fibmw `memo` (n-1)
   f2 <- fibmw `memo` (n-2)
@@ -251,6 +255,26 @@ runFibmr r = startRunMemo . (`runReaderT` r) . fibmr
 
 
 
+fibi 0 = print 0 >> return 0
+fibi 1 = print 1 >> return 1
+fibi n = do
+  n1 <- fibi (n-1)
+  n2 <- fibi (n-2)
+  let r = n1+n2
+  print r >> return r
+
+
+fibmi 0 = print 0 >> return 0
+fibmi 1 = print 1 >> return 1
+fibmi n = do
+  n1 <- fibmi `memo` (n-1)
+  n2 <- fibmi `memo` (n-2)
+  let r = n1+n2
+  print r >> return r
+
+
+
+
 
 -- Ackerman function
 ack :: Integer -> Integer -> Integer
@@ -258,7 +282,8 @@ ack 0 n = n+1
 ack m 0 = ack (m-1) 1
 ack m n = ack (m-1) (ack m (n-1))
 
-ackm :: (Integer,Integer) -> Memo (Integer,Integer) Integer Integer
+--ackm :: (Integer,Integer) -> Memo (Integer,Integer) Integer Integer
+ackm :: (Num n, Ord n, MonadMemo (n, n) n m) => (n, n) -> m n
 ackm (0,n) = return (n+1)
 ackm (m,0) = ackm `memo` ((m-1),1)
 ackm (m,n) = do

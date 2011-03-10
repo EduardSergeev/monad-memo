@@ -2,7 +2,8 @@
 
 module Control.Monad.Memo.Test.Main
 (
-       run
+       runAll,
+       tests
 ) where
 
 import Test.QuickCheck
@@ -14,6 +15,10 @@ import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad.Cont
 import Control.Monad.List
+
+import Test.Framework (defaultMain, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+
 
 
 newtype SmallInt n = SmallInt { toInt::n } deriving Show
@@ -28,6 +33,21 @@ instance Arbitrary a => Arbitrary (SmallList a) where
       n <- choose (0,10)
       ls <- arbitrary
       return $ SmallList $ take n ls 
+
+tests = [
+        testGroup "Transformers" [
+                       testProperty "ReaderEqv"  prop_ReaderEqv,
+                       testProperty "WriterEqv"  prop_WriterEqv,
+                       testProperty "ContEqv"    prop_ContEqv,
+                       testProperty "ListEqv"    prop_ListEqv,
+                       testProperty "StateEqv"   prop_StateEqv
+                      ],
+        testGroup "Others" [
+                       testProperty "MutualFGEqv"  prop_MutualFEqv
+                       ]
+    ]
+
+
 
 
 -- | With ReaderT
@@ -159,10 +179,10 @@ prop_ListEqv ls =
 -- | Mutual recursion
 f :: Int -> (Int,String)
 f 0 = (1,"+")
-f (n+1)	=(g(n,fst(f n)),"-" ++ snd(f n))
+f n =(g((n-1),fst(f (n-1))),"-" ++ snd(f (n-1)))
 g :: (Int, Int) -> Int
 g (0, m)  = m + 1
-g (n+1,m) = fst(f n)-g(n,m)
+g (n,m) = fst(f (n-1))-g((n-1),m)
 
 type MemoF = MemoT Int (Int,String)
 type MemoG = Memo (Int,Int) Int
@@ -170,16 +190,16 @@ type MemoFG = MemoF MemoG
 
 fm :: Int -> MemoFG (Int,String)
 fm 0 = return (1,"+")
-fm (n+1) = do
-  fn <- fm `memol0` n
-  g <- gm `memol1` (n , fst fn)
+fm n = do
+  fn <- fm `memol0` (n-1)
+  g <- gm `memol1` (n-1 , fst fn)
   return (g , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
 gm (0,m) = return (m+1) 
-gm (n+1,m) = do
-  fn <- fm `memol0` n
-  g <- gm `memol1` (n,m)
+gm (n,m) = do
+  fn <- fm `memol0` (n-1)
+  g <- gm `memol1` (n-1,m)
   return $ fst fn - g
 
 evalAll = startEvalMemo . startEvalMemoT
@@ -199,8 +219,8 @@ prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
 
 
 
-run :: IO ()
-run = do
+runAll :: IO ()
+runAll = do
   quickCheck prop_ReaderEqv
   quickCheck prop_WriterEqv
   quickCheck prop_ContEqv

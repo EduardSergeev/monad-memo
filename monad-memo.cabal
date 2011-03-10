@@ -4,7 +4,7 @@ Name:                monad-memo
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.1.0
+Version:             0.1.1
 
 -- A short (one-line) description of the package.
 Synopsis:            Memoization monad transformer
@@ -29,8 +29,6 @@ Author:              Eduard Sergeev
 -- and patches.
 Maintainer:          Eduard.Sergeev@gmail.com
 
--- A copyright notice.
--- Copyright:           
 
 Category:            Control
 
@@ -38,39 +36,45 @@ Build-type:          Simple
 
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.2
+Cabal-version:       >=1.10
 
 
 Flag test-suite
-  Description: Enable QuickCheck test suite run once package is built
-  Default:     False
+  description: Enable QuickCheck test suite run once package is built
+  default:     False
 
 Flag examples
-  Description: Builds examples
-  Default:     False
+  description: Builds examples
+  default:     False
 
 
 Library
-  -- Modules exported by the library.
-  Exposed-modules:
+  default-language:	Haskell2010
+  build-depends:
+     base >= 3.0 && < 5,
+     mtl >= 2.0,
+     transformers >= 0.2,
+     containers >= 0.3
+
+  exposed-modules:
      Control.Monad.Memo,
      Control.Monad.Memo.Class,
      Control.Monad.Trans.Memo.Strict
 
-  if flag(test-suite)
-     Exposed-modules: Control.Monad.Memo.Test.Main
   if flag(examples)
-     Exposed-modules: Control.Monad.Memo.Example.Main
+     exposed-modules: Control.Monad.Memo.Example.Main
   
-  -- Packages needed in order to build this package.
-  Build-depends:
+
+Test-Suite tests
+  default-language:	Haskell2010
+  type: exitcode-stdio-1.0
+  main-is: Tests.hs
+  build-depends: 
      base >= 3.0 && < 5,
      mtl >= 2.0,
      transformers >= 0.2,
-
      containers >= 0.3,
-
      random >= 1.0,
-     QuickCheck >= 2.0       
-
-  
+     QuickCheck >= 2.0,
+     test-framework-quickcheck2 >= 0.2.9,
+     test-framework >= 0.3.3

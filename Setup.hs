@@ -1,7 +1,8 @@
 import Distribution.Simple
-import Test.Main
+import Distribution.Simple.LocalBuildInfo
+import System.Process
 
+main = defaultMainWithHooks simpleUserHooks { runTests = run }
 
-main = defaultMainWithHooks simpleUserHooks { runTests = runt }
-
-runt _ _ _ _ = run
+run _ _ pd lbi = system testprog >> return ()
+    where testprog = (buildDir lbi) ++"/tests/tests"

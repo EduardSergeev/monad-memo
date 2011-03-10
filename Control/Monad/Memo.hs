@@ -133,10 +133,11 @@ Stacking them together gives us te overall type for our combined memoization mon
 -}
 
 {- $transExample
-Being transformer, @MemoT@ can be used with other monads and transformers:
+'MonadMemo' can be combined with other monads and transformers:
 
-With @Writer@:
+With 'MonadWriter':
 
+>fibmw :: (Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
 >fibmw 0 = return 0
 >fibmw 1 = return 1
 >fibmw n = do
