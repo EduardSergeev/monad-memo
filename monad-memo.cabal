@@ -38,6 +38,9 @@ Build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.10
 
+source-repository head
+  type:		  svn
+  location:	  http://monad-memo.googlecode.com/svn/trunk/
 
 Flag test-suite
   description: Enable QuickCheck test suite run once package is built
