@@ -1,8 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Control.Monad.Memo.Test.Main
+module Control.Monad.Memo.Test
 (
-       runAll,
        tests
 ) where
 
@@ -33,20 +32,6 @@ instance Arbitrary a => Arbitrary (SmallList a) where
       n <- choose (0,10)
       ls <- arbitrary
       return $ SmallList $ take n ls 
-
-tests = [
-        testGroup "Transformers" [
-                       testProperty "ReaderEqv"  prop_ReaderEqv,
-                       testProperty "WriterEqv"  prop_WriterEqv,
-                       testProperty "ContEqv"    prop_ContEqv,
-                       testProperty "ListEqv"    prop_ListEqv,
-                       testProperty "StateEqv"   prop_StateEqv
-                      ],
-        testGroup "Others" [
-                       testProperty "MutualFGEqv"  prop_MutualFEqv
-                       ]
-    ]
-
 
 
 
@@ -219,11 +204,16 @@ prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
 
 
 
-runAll :: IO ()
-runAll = do
-  quickCheck prop_ReaderEqv
-  quickCheck prop_WriterEqv
-  quickCheck prop_ContEqv
-  quickCheck prop_StateEqv
-  quickCheck prop_ListEqv
-  quickCheck prop_MutualFEqv
+
+tests = [
+        testGroup "Transformers" [
+                       testProperty "ReaderEqv"  prop_ReaderEqv,
+                       testProperty "WriterEqv"  prop_WriterEqv,
+                       testProperty "ContEqv"    prop_ContEqv,
+                       testProperty "ListEqv"    prop_ListEqv,
+                       testProperty "StateEqv"   prop_StateEqv
+                      ],
+        testGroup "Others" [
+                       testProperty "MutualFGEqv"  prop_MutualFEqv
+                       ]
+    ]

@@ -62,7 +62,7 @@ Library
      Control.Monad.Trans.Memo.Strict
 
   if flag(examples)
-     exposed-modules: Control.Monad.Memo.Example.Main
+     exposed-modules: Control.Monad.Memo.Example
   
 
 Test-Suite tests

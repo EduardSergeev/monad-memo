@@ -13,7 +13,7 @@ Samples of usage of MemoT
 
 {-# LANGUAGE FlexibleContexts #-}
 
-module Control.Monad.Memo.Example.Main
+module Control.Monad.Memo.Example
     (
          -- * Memoized Fibonacci number function
          fibm,
