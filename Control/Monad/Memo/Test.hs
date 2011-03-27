@@ -53,9 +53,9 @@ fibmr 1 = return 1
 fibmr 2 = return 1
 fibmr n = do
   p1 <- ask
-  p2 <- local (const (p1+1)) $ fibmr `memo` (n-2)          
-  f1 <- fibmr `memo` (n-1)
-  f2 <- fibmr `memo` (n-2)
+  p2 <- local (const (p1+1)) $ memo fibmr (n-2)          
+  f1 <- memo fibmr (n-1)
+  f2 <- memo fibmr (n-2)
   return (p1+f1+f2+p2)
 
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
@@ -77,8 +77,8 @@ fibw n = do
 fibmw 0 = return 0
 fibmw 1 = return 1
 fibmw n = do
-  f1 <- fibmw `memo` (n-1)
-  f2 <- fibmw `memo` (n-2)
+  f1 <- memo fibmw (n-1)
+  f2 <- memo fibmw (n-2)
   tell $ show n
   return (f1+f2)
 
@@ -99,9 +99,9 @@ fibc n = do
 fibmc 0 = return 0
 fibmc 1 = return 1
 fibmc n = do
-  f1 <- fibmc `memo` (n-1)
+  f1 <- memo fibmc (n-1)
   f2 <- callCC $ \ break -> do
-          if n == 4 then break 42 else fibmc `memo` (n-2)
+          if n == 4 then break 42 else memo fibmc (n-2)
   return (f1+f2)
 
 prop_ContEqv :: SmallInt Int -> Bool
@@ -124,8 +124,8 @@ fibms 0 = return 0
 fibms 1 = return 1
 fibms n = do
   s <- get
-  f1 <- fibms `memo` (n-1)
-  f2 <- fibms `memo` (n-2)
+  f1 <- memo fibms (n-1)
+  f2 <- memo fibms (n-2)
   modify $ \s -> s+1
   return (f1+f2+s)
 
@@ -152,8 +152,8 @@ unfringe as  = do
 unfringem [a] = return (Leaf a)
 unfringem as = do
   (l,k) <- ListT $ return (partitions as)
-  t <- unfringem `memo` l
-  u <- unfringem `memo` k
+  t <- memo unfringem l
+  u <- memo unfringem k
   return (Fork t u)
 
 prop_ListEqv :: SmallList Char -> Bool
@@ -176,15 +176,15 @@ type MemoFG = MemoF MemoG
 fm :: Int -> MemoFG (Int,String)
 fm 0 = return (1,"+")
 fm n = do
-  fn <- fm `memol0` (n-1)
-  g <- gm `memol1` (n-1 , fst fn)
+  fn <- memol0 fm (n-1)
+  g <- memol1 gm (n-1 , fst fn)
   return (g , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
 gm (0,m) = return (m+1) 
 gm (n,m) = do
-  fn <- fm `memol0` (n-1)
-  g <- gm `memol1` (n-1,m)
+  fn <- memol0 fm (n-1)
+  g <- memol1 gm (n-1,m)
   return $ fst fn - g
 
 evalAll = startEvalMemo . startEvalMemoT
@@ -202,6 +202,36 @@ prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
         x = toInt sx
         y = toInt sy
 
+-- Same as above but without explicit uncurring
+fm2 :: Int -> MemoFG (Int,String)
+fm2 0 = return (1,"+")
+fm2 n = do
+  fn <- memol0 fm2 (n-1)
+  g <- for2 memol1 gm2 (n-1) (fst fn)
+  return (g , "-" ++ snd fn)
+
+gm2 :: Int -> Int -> MemoFG Int
+gm2 0 m = return (m+1) 
+gm2 n m = do
+  fn <- memol0 fm2 (n-1)
+  g <- for2 memol1 gm2 (n-1) m
+  return $ fst fn - g
+
+evalAll2 = startEvalMemo . startEvalMemoT
+evalFm2 = evalAll . fm2
+evalGm2 n m = evalAll $ gm2 n m
+
+
+prop_Mutual2FEqv :: SmallInt Int -> Bool
+prop_Mutual2FEqv sx  = f x == evalFm2 x
+      where x = toInt sx
+
+prop_Mutual2GEqv :: SmallInt Int -> SmallInt Int -> Bool
+prop_Mutual2GEqv sx sy = g (x,y) == evalGm2 x y
+      where
+        x = toInt sx
+        y = toInt sy
+
 
 
 
@@ -214,6 +244,7 @@ tests = [
                        testProperty "StateEqv"   prop_StateEqv
                       ],
         testGroup "Others" [
-                       testProperty "MutualFGEqv"  prop_MutualFEqv
+                       testProperty "MutualFGEqv"       prop_MutualFEqv,
+                       testProperty "MutualCurryFGEqv"  prop_Mutual2FEqv
                        ]
     ]

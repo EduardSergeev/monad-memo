@@ -29,8 +29,11 @@ module Control.Monad.Memo (
     startRunMemoT,
     startEvalMemoT,
     module Control.Monad,
-    module Control.Monad.Fix,
     module Control.Monad.Trans,
+    -- * Adapter for memoization of multi-argument functions
+    for2,
+    for3,
+    for4,
     -- * Memoization cache level access functions         
     memoln,
     memol0,
@@ -46,6 +49,9 @@ module Control.Monad.Memo (
 
     -- * Example 3: Combining Memo with other transformers
     -- $transExample
+
+    -- * Example 4: Memoization of multi-argument function
+    -- $multiExample
     ) where
 
 import Control.Monad.Memo.Class
@@ -54,9 +60,8 @@ import Control.Monad.Trans.Memo.Strict (
     MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
     Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
 
-import Control.Monad.Trans
 import Control.Monad
-import Control.Monad.Fix
+import Control.Monad.Trans
 
 {- $fibExample
 Memoization can be specified whenever monadic computation is taking place.
@@ -84,8 +89,8 @@ Then we can specify which computation we want to memoize with 'memo' (both recur
 >fibm 0 = return 0
 >fibm 1 = return 1
 >fibm n = do
->  n1 <- fibm `memo` (n-1)
->  n2 <- fibm `memo` (n-2)
+>  n1 <- memo fibm (n-1)
+>  n2 <- memo fibm (n-2)
 >  return (n1+n2)
 
 NB: 'Ord' is required since internaly Memo implementation uses 'Data.Map' to store and lookup memoized values
@@ -113,19 +118,19 @@ Stacking them together gives us te overall type for our combined memoization mon
 >type MemoFB = MemoFib (MemoBoo Identity)
 
 >boo :: Double -> MemoFB String
->boo 0 = "boo: 0" `trace` return ""
->boo n = ("boo: " ++ show n) `trace` do
->  n1 <- boo `memol1` (n-1)           -- uses next in stack transformer (memol_1_): MemoBoo is nested in MemoFib
->  fn <- fibm2 `memol0` floor (n-1)   -- uses current transformer (memol_0_): MemoFib
+>boo 0 = return ""
+>boo n = do
+>  n1 <- memol1 boo (n-1)           -- uses next in stack transformer (memol_1_): MemoBoo is nested in MemoFib
+>  fn <- memol0 fibm2 floor (n-1)   -- uses current transformer (memol_0_): MemoFib
 >  return (show fn ++ n1)
 
 >fibm2 :: Integer -> MemoFB Integer 
->fibm2 0 = "fib: 0" `trace` return 0
->fibm2 1 = "fib: 1" `trace` return 1
->fibm2 n = ("fib: " ++ show n) `trace` do
->  l <- boo `memol1` fromInteger n   -- as in 'boo' we need to use 1st nested transformer here
->  f1 <- fibm2 `memol0` (n-1)        -- and 0st (the current) for fibm2
->  f2 <- fibm2 `memol0` (n-2)
+>fibm2 0 = return 0
+>fibm2 1 = return 1
+>fibm2 n = do
+>  l <- memol1 boo (fromInteger n)        -- as in 'boo' we need to use 1st nested transformer here
+>  f1 <- memol0 fibm2 (n-1)               -- and 0st (the current) for fibm2
+>  f2 <- memol0 fibm2 (n-2)
 >  return (f1 + f2 + floor (read l))
 
 >evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
@@ -141,8 +146,8 @@ With 'MonadWriter':
 >fibmw 0 = return 0
 >fibmw 1 = return 1
 >fibmw n = do
->  f1 <- fibmw `memo` (n-1)
->  f2 <- fibmw `memo` (n-2)
+>  f1 <- memo fibmw (n-1)
+>  f2 <- memo fibmw (n-2)
 >  tell $ show n
 >  return (f1+f2)
 
@@ -150,3 +155,25 @@ With 'MonadWriter':
 
 -}
 
+{- $multiExample
+Functions with more than one argument (in curried form) can also be memoized with a help of @forX@ set of function:
+For two-argument function we can use 'for2' function adapter:
+
+>-- Ackerman function classic definition
+>ack :: Num n => n -> n -> n
+>ack 0 n = n+1
+>ack m 0 = ack (m-1) 1
+>ack m n = ack (m-1) (ack m (n-1))
+>
+>-- Ackerman function memoized definition
+>ackm :: (Num n, Ord n, MonadMemo (n, n) n m) => n -> n -> m n
+>ackm 0 n = return (n+1)
+>ackm m 0 = for2 memo ackm (m-1) 1
+>ackm m n = do
+>  n1 <- for2 memo ackm m (n-1)
+>  for2 memo ackm (m-1) n1
+>
+>evalAckm :: (Num n, Ord n) => n -> n -> n
+>evalAckm n m = startEvalMemo $ ackm n m
+
+-}

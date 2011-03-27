@@ -13,7 +13,7 @@ Portability :  non-portable (multi-param classes, functional dependencies)
 
 {-# LANGUAGE NoImplicitPrelude, TupleSections,
   MultiParamTypeClasses, FunctionalDependencies,
-  UndecidableInstances, FlexibleInstances, RankNTypes #-}
+  UndecidableInstances, FlexibleInstances, FlexibleContexts, RankNTypes #-}
 
 
 module Control.Monad.Memo.Class
@@ -22,12 +22,16 @@ module Control.Monad.Memo.Class
       MonadCache(..),
       MonadMemo(..),
 
+      for2,
+      for3,
+      for4,
+
       memoln,
       memol0,
       memol1,
       memol2,
       memol3,
-      memol4
+      memol4,
 
 ) where
 
@@ -50,6 +54,9 @@ import Control.Monad.Trans.Writer.Lazy as Lazy
 import Control.Monad.Trans.Writer.Strict as Strict
 
 
+import Control.Arrow
+import Prelude (undefined)
+
 class Monad m => MonadCache k v m | m -> k, m -> v where
     lookup :: k -> m (Maybe v)
     add :: k -> v -> m ()
@@ -69,11 +76,45 @@ memoln fl fk f k = do
                 fl $ add (fk k) r
                 return r
 
+memoln2 :: (MonadCache k v m1, Monad m1, Monad m2) =>
+           (forall a.m1 a -> m2 a) -> (k -> m2 v) -> k -> m2 v
+memoln2 fl f k = do
+  mr <- fl $ lookup k
+  case mr of
+    Just r -> return r
+    Nothing -> do
+                r <- f k
+                fl $ add k r
+                return r
+
+memov2 f k = do
+  mr <- lookup k
+  case mr of
+    Just r -> return r
+    Nothing -> do
+                r <- f k
+                add k r
+                return r
+
+-- | Adapter for memoization of two-argument function
+for2 :: (((k1, k2) -> mv) -> (k1, k2) -> mv) -> (k1 -> k2 -> mv) -> k1 -> k2 -> mv
+for2 m f a b = m (\(a,b) -> f a b) (a,b)
+
+-- | Adapter for memoization of three-argument function
+for3 :: (((k1, k2, k3) -> mv) -> (k1, k2, k3) -> mv) -> (k1 -> k2 -> k3 -> mv) -> k1 -> k2 -> k3 -> mv
+for3 m f a b c = m (\(a,b,c) -> f a b c) (a,b,c)
+
+
+-- | Adapter for memoization of four-argument function
+for4 :: (((k1, k2, k3, k4) -> mv) -> (k1, k2, k3, k4) -> mv) -> (k1 -> k2 -> k3 -> k4 -> mv) -> k1 -> k2 -> k3 -> k4 -> mv
+for4 m f a b c d = m (\(a,b,c,d) -> f a b c d) (a,b,c,d)
+
+
 -- | Uses current monad's memoization cache
 memol0
     :: (MonadCache k v m, Monad m) =>
        (k -> m v) -> k -> m v
-memol0 = memoln id id
+memol0 = memoln2 id
 
 
 -- | Uses the 1st transformer in stack for memoization cache
@@ -82,7 +123,7 @@ memol1
         MonadCache k v m,
         Monad (t1 m)) =>
        (k -> t1 m v) -> k -> t1 m v
-memol1 = memoln lift id
+memol1 = memoln2 lift
 
 
 -- | Uses the 2nd transformer in stack for memoization cache
@@ -124,7 +165,6 @@ memol4
 memol4 = memoln (lift.lift.lift.lift) id
 
 
-
 instance (MonadCache k v m) => MonadMemo k v (IdentityT m) where
     memo f = IdentityT . memol0 (runIdentityT . f)
 
@@ -134,8 +174,8 @@ instance (MonadCache k v m) => MonadMemo k v (ContT r m) where
 instance (MonadCache k (Maybe v) m) => MonadMemo k v (MaybeT m) where
     memo f = MaybeT . memol0 (runMaybeT . f)
 
-instance (MonadMemo k [v] m) => MonadMemo k v (ListT m) where
-    memo f = ListT . memo (runListT . f)
+instance (MonadCache k [v] m) => MonadMemo k v (ListT m) where
+    memo f = ListT . memol0 (runListT . f)
 
 instance (Error e, MonadCache k  (Either e v) m) => MonadMemo k v (ErrorT e m) where
     memo f = ErrorT . memol0 (runErrorT . f)

@@ -70,6 +70,10 @@ module Control.Monad.Memo.Example
          ackm,
          evalAckm,
 
+         -- * Levensthein distance 
+         editDistance,
+         editDistancem,
+
 ) where
 
 import Control.Monad.Memo.Class
@@ -80,17 +84,18 @@ import Control.Monad.Cont
 import Control.Monad.Reader
 import Control.Monad.Writer
 
+import Control.Applicative
+
 import Debug.Trace
 
 
 
---fibm :: (Ord n, Num n) => n -> Memo n n n
 fibm :: (Num n, MonadMemo n n m) => n -> m n
 fibm 0 = return 0
 fibm 1 = return 1
 fibm n = do
-  n1 <- fibm `memo` (n-1)
-  n2 <- fibm `memo` (n-2)
+  n1 <- memo fibm (n-1)
+  n2 <- memo fibm (n-2)
   return (n1+n2)
 
 evalFibm :: Integer -> Integer
@@ -122,8 +127,8 @@ unfringem :: (Ord t, Show t) => [t] -> ListT (Memo [t] [Tree t]) (Tree t)
 unfringem [a] = show [a] `trace` return (Leaf a)
 unfringem as = show as `trace` do
   (l,k) <- ListT $ return (partitions as)
-  t <- unfringem `memo` l
-  u <- unfringem `memo` k
+  t <- memo unfringem l
+  u <- memo unfringem k
   return (Fork t u)
 
 evalUnfringem :: (Ord t, Show t) => [t] -> [Tree t]
@@ -152,15 +157,15 @@ type MemoFG = MemoF (MemoG Identity)
 fm :: Int -> MemoFG (Int,String)
 fm 0 = return (1,"+")
 fm n = do
-  fn <- fm `memol0` (n-1)
-  gn <- gm `memol1` ((n-1) , fst fn)
+  fn <- memol0 fm (n-1)
+  gn <- memol1 gm ((n-1) , fst fn)
   return (gn , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
 gm (0,m) = return (m+1) 
 gm (n,m) = do
-  fn <- fm `memol0` (n-1)
-  gn <- gm `memol1` ((n-1),m)
+  fn <- memol0 fm (n-1)
+  gn <- memol1 gm ((n-1),m)
   return $ fst fn - gn
 
 evalAll = startEvalMemo . startEvalMemoT
@@ -172,6 +177,29 @@ evalFm = evalAll . fm
 -- | Function to run 'gm' computation
 evalGm :: (Int,Int) -> Int
 evalGm = evalAll . gm
+
+
+fm2 :: Int -> MemoFG (Int,String)
+fm2 0 = return (1,"+")
+fm2 n = do
+  fn <- memol0 fm2 (n-1)
+  gn <- for2 memol1 gm2 (n-1) (fst fn)
+  return (gn , "-" ++ snd fn)
+
+-- | Same as @gm@ but in curried form
+gm2 :: Int -> Int -> MemoFG Int
+gm2 0 m = return (m+1) 
+gm2 n m = do
+  fn <- memol0 fm2 (n-1)
+  gn <- for2 memol1 gm2 (n-1) m
+  return $ fst fn - gn
+
+
+evalFm2 :: Int -> (Int, String)
+evalFm2 = evalAll . fm2
+
+evalGm2 :: Int -> Int -> Int
+evalGm2 n m = evalAll $ gm2 n m
 
 
 
@@ -210,8 +238,8 @@ fibmw :: (Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
 fibmw 0 = "fib: 0" `trace` tell "0" >> return 0
 fibmw 1 = "fib: 1" `trace` tell "1" >> return 1
 fibmw n = ("fib: " ++ show n) `trace` do
-  f1 <- fibmw `memo` (n-1)
-  f2 <- fibmw `memo` (n-2)
+  f1 <- memo fibmw (n-1)
+  f2 <- memo fibmw (n-2)
   tell $ show n
   return (f1+f2)
 
@@ -226,9 +254,9 @@ fibmc :: (Num t, Num b, MonadCont m, MonadMemo t b m) => t -> m b
 fibmc 0 = "fib: 0" `trace` return 0
 fibmc 1 = "fib: 1" `trace` return 1
 fibmc n = ("fib: " ++ show n) `trace` do
-  f1 <- fibmc `memo` (n-1)
+  f1 <- memo fibmc (n-1)
   f2 <- callCC $ \ break -> do
-          if n == 4 then break 42 else fibmc `memo` (n-2)
+          if n == 4 then break 42 else memo fibmc (n-2)
   return (f1+f2)
 
 evalFibmc :: Integer -> Integer
@@ -243,9 +271,9 @@ fibmr 1 = "fib: 1" `trace` return 1
 fibmr 2 = "fib: 2" `trace` return 1
 fibmr n = ("fib: " ++ show n) `trace` do
   p1 <- ask
-  p2 <- local (const p1) $ fibmr `memo` (n-2)          
-  f1 <- fibmr `memo` (n-1)
-  f2 <- fibmr `memo` (n-2)
+  p2 <- local (const p1) $ memo fibmr (n-2)          
+  f1 <- memo fibmr (n-1)
+  f2 <- memo fibmr (n-2)
   return (p1+f1+f2+p2)
 
 evalFibmr :: Integer -> Integer -> Integer
@@ -267,8 +295,8 @@ fibi n = do
 fibmi 0 = print 0 >> return 0
 fibmi 1 = print 1 >> return 1
 fibmi n = do
-  n1 <- fibmi `memo` (n-1)
-  n2 <- fibmi `memo` (n-2)
+  n1 <- memo fibmi (n-1)
+  n2 <- memo fibmi (n-2)
   let r = n1+n2
   print r >> return r
 
@@ -277,20 +305,42 @@ fibmi n = do
 
 
 -- Ackerman function
-ack :: Integer -> Integer -> Integer
+ack :: Num n => n -> n -> n
 ack 0 n = n+1
 ack m 0 = ack (m-1) 1
 ack m n = ack (m-1) (ack m (n-1))
 
---ackm :: (Integer,Integer) -> Memo (Integer,Integer) Integer Integer
-ackm :: (Num n, Ord n, MonadMemo (n, n) n m) => (n, n) -> m n
-ackm (0,n) = return (n+1)
-ackm (m,0) = ackm `memo` ((m-1),1)
-ackm (m,n) = do
-  n1 <- ackm `memo` (m,(n-1))
-  ackm `memo` ((m-1),n1)
+ackm :: (Num n, Ord n, MonadMemo (n, n) n m) => n -> n -> m n
+ackm 0 n = return (n+1)
+ackm m 0 = for2 memo ackm (m-1) 1
+ackm m n = do
+  n1 <- for2 memo ackm m (n-1)
+  for2 memo ackm (m-1) n1
 
-evalAckm :: Integer -> Integer -> Integer
-evalAckm n m = startEvalMemo $ ackm (n,m)
+evalAckm :: (Num n, Ord n) => n -> n -> n
+evalAckm n m = startEvalMemo $ ackm n m
 
-runAckm n m = startRunMemo $ ackm (n,m)
+runAckm n m = startRunMemo $ ackm n m
+
+
+-- | Levensthein distance - recursive definition
+editDistance [] ys = length ys
+editDistance xs [] = length xs
+editDistance (x:xs) (y:ys) 
+  | x == y = editDistance xs ys
+  | otherwise = minimum [
+      1 + editDistance xs (y:ys),
+      1 + editDistance (x:xs) ys,
+      1 + editDistance xs ys]
+
+-- | Levensthein distance - with memoization
+editDistancem [] ys = return $ length ys
+editDistancem xs [] = return $ length xs
+editDistancem (x:xs) (y:ys) 
+  | x == y = for2 memo editDistancem xs ys
+  | otherwise = ((+1) . minimum) <$> sequence [
+      for2 memo editDistancem xs (y:ys),
+      for2 memo editDistancem (x:xs) ys,
+      for2 memo editDistancem xs ys]
+
+runEditDistancem xs ys = startEvalMemo $ editDistancem xs ys
