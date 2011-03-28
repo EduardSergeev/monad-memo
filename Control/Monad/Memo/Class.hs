@@ -54,17 +54,18 @@ import Control.Monad.Trans.Writer.Lazy as Lazy
 import Control.Monad.Trans.Writer.Strict as Strict
 
 
-import Control.Arrow
-import Prelude (undefined)
-
+-- | Interface for memoization cache
+-- Is necessary since memoization mechanism from one transformer can use a cache from other (further down the stack) 
 class Monad m => MonadCache k v m | m -> k, m -> v where
     lookup :: k -> m (Maybe v)
     add :: k -> v -> m ()
 
+-- | Memoization interface
 class Monad m => MonadMemo k v m | m -> k, m -> v where
     memo :: (k -> m v) -> k -> m v
 
 
+-- | Memoization for the current transformer in stack using a cache from an arbitrary transformer down the stack
 memoln :: (MonadCache k2 v m1, Monad m1, Monad m2) =>
            (forall a.m1 a -> m2 a) -> (k1 -> k2)  -> (k1 -> m2 v) -> k1 -> m2 v
 memoln fl fk f k = do
@@ -74,26 +75,6 @@ memoln fl fk f k = do
     Nothing -> do
                 r <- f k
                 fl $ add (fk k) r
-                return r
-
-memoln2 :: (MonadCache k v m1, Monad m1, Monad m2) =>
-           (forall a.m1 a -> m2 a) -> (k -> m2 v) -> k -> m2 v
-memoln2 fl f k = do
-  mr <- fl $ lookup k
-  case mr of
-    Just r -> return r
-    Nothing -> do
-                r <- f k
-                fl $ add k r
-                return r
-
-memov2 f k = do
-  mr <- lookup k
-  case mr of
-    Just r -> return r
-    Nothing -> do
-                r <- f k
-                add k r
                 return r
 
 -- | Adapter for memoization of two-argument function
@@ -114,7 +95,7 @@ for4 m f a b c d = m (\(a,b,c,d) -> f a b c d) (a,b,c,d)
 memol0
     :: (MonadCache k v m, Monad m) =>
        (k -> m v) -> k -> m v
-memol0 = memoln2 id
+memol0 = memoln id id
 
 
 -- | Uses the 1st transformer in stack for memoization cache
@@ -123,7 +104,7 @@ memol1
         MonadCache k v m,
         Monad (t1 m)) =>
        (k -> t1 m v) -> k -> t1 m v
-memol1 = memoln2 lift
+memol1 = memoln lift id
 
 
 -- | Uses the 2nd transformer in stack for memoization cache
@@ -161,7 +142,6 @@ memol4
       Monad (t2 (t3 (t4 m))),
       Monad (t1 (t2 (t3 (t4 m)))) ) =>
      (k -> t1 (t2 (t3 (t4 m))) v) -> k -> t1 (t2 (t3 (t4 m))) v
---memol4 :: (MonadTrans t4, MonadCache k v m, Monad (t1 (t2 (t3 (t4 m))))) =>  (k -> t1 (t2 (t3 (t4 m))) v) -> k -> t1 (t2 (t3 (t4 m))) v
 memol4 = memoln (lift.lift.lift.lift) id
 
 
