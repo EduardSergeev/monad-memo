@@ -99,6 +99,13 @@ Then it can be run with 'startEvalMemo'
 
 >startEvalMemo . fibm $ 5
 
+Or using applicative form:
+
+>fibm :: (Num n, Ord n) => n -> Memo n n n
+>fibm 0 = return 0
+>fibm 1 = return 1
+>fibm n = (+) <$> memo fibm (n-1) <*> memo fibm (n-2)
+
 -}
 
 {- $mutualExample

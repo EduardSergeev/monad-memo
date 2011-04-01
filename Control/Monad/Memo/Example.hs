@@ -101,6 +101,19 @@ fibm n = do
 evalFibm :: Integer -> Integer
 evalFibm = startEvalMemo . fibm
 
+-- infix form
+fibm' :: (Num n, Ord n) => n -> Memo n n n
+fibm' 0 = return 0
+fibm' 1 = return 1
+fibm' n = memo fibm' (n-1) `mp` memo fibm' (n-2)
+    where mp = liftM2 (+)
+
+-- applicative form
+fibm'' :: (Num n, Ord n) => n -> Memo n n n
+fibm'' 0 = return 0
+fibm'' 1 = return 1
+fibm'' n = (+) <$> memo fibm'' (n-1) <*> memo fibm'' (n-2)
+
 
 --
 data Tree a = Leaf !a | Fork !(Tree a) !(Tree a) deriving (Show,Eq)
