@@ -48,10 +48,12 @@ import Control.Monad.Trans.Identity
 import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Reader
-import qualified Control.Monad.Trans.State.Lazy as Lazy -- (StateT, get, put)
-import qualified Control.Monad.Trans.State.Strict as Strict -- (StateT, get, put)
-import Control.Monad.Trans.Writer.Lazy as Lazy
-import Control.Monad.Trans.Writer.Strict as Strict
+import qualified Control.Monad.Trans.State.Lazy as SL
+import qualified Control.Monad.Trans.State.Strict as SS
+import qualified Control.Monad.Trans.Writer.Lazy as WL
+import qualified Control.Monad.Trans.Writer.Strict as WS
+import qualified Control.Monad.Trans.RWS.Lazy as RWSL
+import qualified Control.Monad.Trans.RWS.Strict as RWSS
 
 
 -- | Interface for memoization cache
@@ -161,22 +163,30 @@ instance (Error e, MonadCache k  (Either e v) m) => MonadMemo k v (ErrorT e m) w
 
 instance (MonadCache (r,k) v m) => MonadMemo k v (ReaderT r m) where
     memo f k = do
-      e <- ask
-      memoln lift (e,) f k
+      r <- ask
+      memoln lift (r,) f k
 
-instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (Lazy.WriterT w m) where
-    memo f = Lazy.WriterT . memol0 (Lazy.runWriterT . f)
+instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (WL.WriterT w m) where
+    memo f = WL.WriterT . memol0 (WL.runWriterT . f)
 
-instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (Strict.WriterT w m) where
-    memo f = Strict.WriterT . memol0 (Strict.runWriterT . f)
+instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (WS.WriterT w m) where
+    memo f = WS.WriterT . memol0 (WS.runWriterT . f)
 
 
-instance (MonadCache (s,k) v m) => MonadMemo k v (Lazy.StateT s m) where
+instance (MonadCache (s,k) v m) => MonadMemo k v (SL.StateT s m) where
     memo f k = do
-      s <- Lazy.get
+      s <- SL.get
       memoln lift (s,) f k
 
-instance (MonadCache (s,k) v m) => MonadMemo k v (Strict.StateT s m) where
+instance (MonadCache (s,k) v m) => MonadMemo k v (SS.StateT s m) where
     memo f k = do
-      s <- Strict.get
+      s <- SS.get
       memoln lift (s,) f k
+
+
+--instance (Monoid w, MonadCache (r,w,s,k) v m) => MonadMemo k v (RWSL.RWST r w s m) where
+--    memo f k = do
+--      r <- RWSL.ask
+--      s <- RWSL.get
+--      (_,w) <- RWSL.listen
+--      memoln lift (r,s,w,) f k
