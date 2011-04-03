@@ -30,7 +30,7 @@ Author:              Eduard Sergeev
 Maintainer:          Eduard.Sergeev@gmail.com
 
 
-Category:            Control
+Category:            Control, Monad
 
 Build-type:          Simple
 
