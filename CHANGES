@@ -1,0 +1,8 @@
+
+
+0.2.0
+- Added a set of forX functions (for2, for3 and for4) to adapt curried function into uncuried MemoCache
+
+0.3.0
+- Added generalized MemoStateT transformer (to host any Data.MapLike cache-container)
+- MemoT is now MemoStateT instantiated with Data.Map

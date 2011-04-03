@@ -64,7 +64,6 @@ class Monad m => MonadCache k v m | m -> k, m -> v where
 class Monad m => MonadMemo k v m | m -> k, m -> v where
     memo :: (k -> m v) -> k -> m v
 
-
 -- | Memoization for the current transformer in stack using a cache from an arbitrary transformer down the stack
 memoln :: (MonadCache k2 v m1, Monad m1, Monad m2) =>
            (forall a.m1 a -> m2 a) -> (k1 -> k2)  -> (k1 -> m2 v) -> k1 -> m2 v

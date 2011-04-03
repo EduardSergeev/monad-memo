@@ -76,8 +76,8 @@ module Control.Monad.Memo.Example
 
 ) where
 
-import Control.Monad.Memo.Class
-import Control.Monad.Trans.Memo.Strict
+import Control.Monad.Memo
+
 import Control.Monad.Identity
 import Control.Monad.List
 import Control.Monad.Cont

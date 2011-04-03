@@ -4,7 +4,7 @@ Name:                monad-memo
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.2.0
+Version:             0.3.0
 
 -- A short (one-line) description of the package.
 Synopsis:            Memoization monad transformer
@@ -40,7 +40,8 @@ Cabal-version:       >=1.10
 
 Extra-source-files:
 	Tests.hs,
-	Control/Monad/Memo/Test.hs
+	Control/Monad/Memo/Test.hs,
+	CHANGES
 
 source-repository head
   type:		  svn
@@ -62,7 +63,9 @@ Library
   exposed-modules:
      Control.Monad.Memo,
      Control.Monad.Memo.Class,
-     Control.Monad.Trans.Memo.Strict
+     Control.Monad.Trans.Memo.State,
+     Control.Monad.Trans.Memo.Map,
+     Data.MapLike
 
   if flag(examples)
      exposed-modules: Control.Monad.Memo.Example

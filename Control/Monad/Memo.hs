@@ -7,29 +7,38 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, functional dependencies)
 
-[Computation type:] Monadic computations with support for memoization.
+Exports all necessary bits and pieces (default set) for memoization.
+It should be suficient to import just thim module to be able to ad memoization to your monadic code
 
-Defines monadic interface 'MonadMemo' for memoization and simple implementation 'MemoT' (based on 'Data.Map')
 -}
 
 
 module Control.Monad.Memo (
+    module Control.Monad,
+    module Control.Monad.Trans,
+    module Data.MapLike,
     -- * MonadMemo class
     MonadMemo(..),
-    -- * The Memo monad
+    -- * Generalized Memo monad
+    MemoState(..),
+    runMemoState,
+    evalMemoState,
+    -- * Generalized MemoStateT monad transformer
+    MemoStateT(..),
+    runMemoStateT,
+    evalMemoStateT,
+    -- * Map-based Memo monad
     Memo,
     runMemo,
     evalMemo,
     startRunMemo,
     startEvalMemo,
-    -- * The MemoT monad transformer
+    -- * Map-based MemoT monad transformer
     MemoT(..),
     runMemoT,
     evalMemoT,
     startRunMemoT,
     startEvalMemoT,
-    module Control.Monad,
-    module Control.Monad.Trans,
     -- * Adapter for memoization of multi-argument functions
     for2,
     for3,
@@ -56,9 +65,18 @@ module Control.Monad.Memo (
 
 import Control.Monad.Memo.Class
 
-import Control.Monad.Trans.Memo.Strict (
-    MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
-    Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
+--import Control.Monad.Trans.Memo.Strict (
+--    MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
+--    Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
+
+import Control.Monad.Trans.Memo.State -- (
+--    MemoT(..), runMemoT, evalMemoT,
+--    Memo, runMemo, evalMemo )
+
+import Control.Monad.Trans.Memo.Map
+
+import Data.MapLike
+
 
 import Control.Monad
 import Control.Monad.Trans
