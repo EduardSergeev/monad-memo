@@ -65,7 +65,8 @@ Library
      Control.Monad.Memo.Class,
      Control.Monad.Trans.Memo.State,
      Control.Monad.Trans.Memo.Map,
-     Data.MapLike
+     Data.MapLike,
+     Data.MapLike.Instances
 
   if flag(examples)
      exposed-modules: Control.Monad.Memo.Example

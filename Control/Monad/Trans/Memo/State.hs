@@ -8,6 +8,7 @@ Stability   :  experimental
 Portability :  non-portable (multi-param classes, flexible instances)
 
 Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization monad transformer
+
 -}
 
 {-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances #-}
@@ -37,24 +38,24 @@ import qualified Data.MapLike as M
 import Control.Monad.Memo.Class
 
 
+-- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer with generic 'Data.MapLike' container for a cache
+newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateT c m a }
 
-newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateT (c k v) m a }
 
-runMemoStateT :: MemoStateT c k v m a -> c k v -> m (a, c k v)
+runMemoStateT :: MemoStateT c k v m a -> c -> m (a, c)
 runMemoStateT = runStateT . toStateT
 
-evalMemoStateT :: (Monad m) => MemoStateT c k v m a -> c k v -> m a
+evalMemoStateT :: (Monad m) => MemoStateT c k v m a -> c -> m a
 evalMemoStateT m s = runMemoStateT m s >>= return . fst
 
 
 type MemoState c k v = MemoStateT c k v Identity
 
-runMemoState :: MemoState c k v a -> c k v -> (a, c k v)
+runMemoState :: MemoState c k v a -> c -> (a, c)
 runMemoState m = runIdentity . runMemoStateT m
 
-evalMemoState :: MemoState c k v a -> c k v -> a
+evalMemoState :: MemoState c k v a -> c -> a
 evalMemoState m = runIdentity . evalMemoStateT m
-
 
 
 instance (Functor m) => Functor (MemoStateT c k v m) where
