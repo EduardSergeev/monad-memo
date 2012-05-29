@@ -2,7 +2,6 @@
 This package is aimed to provide a convenient mechanism to add memoization to Haskell monadic functions.
 
 ## Details
-What it is and why it is
 Memoization is a well known way to speed up calculation by caching calculated results and reusing them whenever a memoized function is called subsequently with the same arguments. Memoization is usually associated with Dynamic programming. Haskell, being pure (and lazy) functional language is especially well suited for memoization. Surprisingly, although one can easily find papers and packaged describing and implementing various memoization techniques, I couldn't find any commonly accepted standard. Hence here we have another implementation :)
 
 ## Basic ideas
@@ -17,7 +16,7 @@ The basic ideas behind this implementation the following:
 
 ## Example of usage
 
-* Recursive Fibonacci number function in monadic form with memoization:
+Recursive Fibonacci number function in monadic form with memoization:
 
     fibm :: (Num n, MonadMemo n n m) => n -> m n
     fibm 0 = return 0
@@ -94,6 +93,7 @@ Lets try to just add [memo](http://hackage.haskell.org/packages/archive/monad-me
       return $ fst fn - gn
 
 GHC complains:
+
     "Occurs check: cannot construct the infinite type: t = (t, v)
          Expected type: t
    
