@@ -33,5 +33,7 @@ instance Ord k => MapLike (M.Map k v) k v where
 
 -- | Data.IntMap is usually more efficient that Data.Map if @k :: Int@ 
 instance MapLike (IM.IntMap v) Int v where
+    {-# INLINE add #-}
     add = IM.insert
+    {-# INLINE lookup #-}
     lookup = IM.lookup

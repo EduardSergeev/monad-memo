@@ -11,7 +11,8 @@ Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization m
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances,
+  GeneralizedNewtypeDeriving #-}
 
 module Control.Monad.Trans.Memo.State
 (
@@ -38,9 +39,11 @@ import qualified Data.MapLike as M
 import Control.Monad.Memo.Class
 
 
--- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer with generic 'Data.MapLike' container for a cache
+-- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer
+-- with generic 'Data.MapLike' container for a cache
 newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateT c m a }
-
+    deriving (Functor, Applicative, Alternative,
+                     Monad, MonadPlus, MonadFix)
 
 runMemoStateT :: MemoStateT c k v m a -> c -> m (a, c)
 runMemoStateT = runStateT . toStateT
@@ -56,30 +59,6 @@ runMemoState m = runIdentity . runMemoStateT m
 
 evalMemoState :: MemoState c k v a -> c -> a
 evalMemoState m = runIdentity . evalMemoStateT m
-
-
-instance (Functor m) => Functor (MemoStateT c k v m) where
-    fmap f m = MemoStateT $ fmap f (toStateT m)
-
-instance (Functor m, Monad m) => Applicative (MemoStateT c k v m) where
-    pure  = return 
-    (<*>) = ap
-
-instance (Functor m, MonadPlus m) => Alternative (MemoStateT l k v m) where
-    empty = mzero
-    (<|>) = mplus
-
-instance (Monad m) => Monad (MemoStateT l k v m) where
-    return = MemoStateT . return
-    m >>= k = MemoStateT $ (toStateT m) >>= (toStateT . k) 
-    m >> n = MemoStateT $ (toStateT m) >> (toStateT n) 
-
-instance (MonadPlus m) => MonadPlus (MemoStateT l k v m) where
-    mzero       = MemoStateT mzero
-    m `mplus` n = MemoStateT $ toStateT m `mplus` toStateT n
-
-instance (MonadFix m) => MonadFix (MemoStateT l k v m) where
-    mfix f = MemoStateT $ mfix (toStateT . f)
 
 
 instance (Monad m, M.MapLike c k v) => MonadCache k v (MemoStateT c k v m) where

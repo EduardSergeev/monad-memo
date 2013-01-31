@@ -74,6 +74,12 @@ module Control.Monad.Memo.Example
          editDistance,
          editDistancem,
 
+         -- * Travelling salesman problem
+         evalTsp,
+         evalTspSTU
+
+         -- * Different MonadCache for the same monadic function
+
 ) where
 
 import Control.Monad.Memo
@@ -83,23 +89,17 @@ import Control.Monad.List
 import Control.Monad.Cont
 import Control.Monad.Reader
 import Control.Monad.Writer
+import Control.Monad.ST
+import qualified Data.IntMap as IM
+import Data.Array.ST
+import Data.Array.Unboxed
 
 import Control.Applicative
 
 import Debug.Trace
+import Data.Array.MArray
 
 
-
-fibm :: (Num n, MonadMemo n n m) => n -> m n
-fibm 0 = return 0
-fibm 1 = return 1
-fibm n = do
-  n1 <- memo fibm (n-1)
-  n2 <- memo fibm (n-2)
-  return (n1+n2)
-
-evalFibm :: Integer -> Integer
-evalFibm = startEvalMemo . fibm
 
 -- infix form
 fibm' :: (Num n, Ord n) => n -> Memo n n n
@@ -247,7 +247,7 @@ evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
 
 -- | Here we use monomorphic type
 --fibmw :: Integer -> WriterT String (Memo Integer (Integer,String)) Integer
-fibmw :: (Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
+--fibmw :: (Show n, Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
 fibmw 0 = "fib: 0" `trace` tell "0" >> return 0
 fibmw 1 = "fib: 1" `trace` tell "1" >> return 1
 fibmw n = ("fib: " ++ show n) `trace` do
@@ -261,9 +261,15 @@ evalFibmw = startEvalMemo . runWriterT . fibmw
 
 runFibmw = startRunMemo . runWriterT . fibmw
 
+evalFibmwST n = evalSTArrayMemo (runWriterT (fibmw n)) (0,n)
+runFibmwST n = runSTArrayMemo (runWriterT (fibmw n)) (0,n)
+
+evalFibmwIO n = evalIOArrayMemoM (runWriterT (fibmw n)) (0,n)
+runFibmwIO n = runIOArrayMemoM (runWriterT (fibmw n)) (0,n)
+
 
 -- | Can also be defined with polymorphic monad classes
-fibmc :: (Num t, Num b, MonadCont m, MonadMemo t b m) => t -> m b
+--fibmc :: (Num t, Num b, MonadCont m, MonadMemo t b m) => t -> m b
 fibmc 0 = "fib: 0" `trace` return 0
 fibmc 1 = "fib: 1" `trace` return 1
 fibmc n = ("fib: " ++ show n) `trace` do
@@ -277,8 +283,14 @@ evalFibmc = startEvalMemo . (`runContT`return) . fibmc
 
 runFibmc = startRunMemo . (`runContT`return) . fibmc
 
+evalFibmcIO :: Integer -> IO Integer
+evalFibmcIO n = (`evalIOArrayMemoM`(0,n)) . (`runContT`return) . fibmc $ n
 
-fibmr :: (Num t, Num a, MonadMemo t a m, MonadReader a m) => t -> m a
+evalFibmcST :: Integer -> Integer
+evalFibmcST n = (`evalSTArrayMemo`(0,n)) $ (`runContT`return) $ fibmc n
+
+
+--fibmr :: (Eq t, Num t, Num a, MonadMemo t a m, MonadReader a m) => t -> m a
 fibmr 0 = "fib: 0" `trace` return 0
 fibmr 1 = "fib: 1" `trace` return 1
 fibmr 2 = "fib: 2" `trace` return 1
@@ -317,8 +329,8 @@ fibmi n = do
 
 
 
--- Ackerman function
-ack :: Num n => n -> n -> n
+-- | Ackerman function
+-- ack :: Num n => n -> n -> n
 ack 0 n = n+1
 ack m 0 = ack (m-1) 1
 ack m n = ack (m-1) (ack m (n-1))
@@ -334,6 +346,9 @@ evalAckm :: (Num n, Ord n) => n -> n -> n
 evalAckm n m = startEvalMemo $ ackm n m
 
 runAckm n m = startRunMemo $ ackm n m
+
+evalAckmST :: Int -> Int -> Int
+evalAckmST n m = evalSTUArrayMemo (ackm n m) ((0,0),(4,100000))
 
 
 -- | Levensthein distance - recursive definition
@@ -357,3 +372,76 @@ editDistancem (x:xs) (y:ys)
       for2 memo editDistancem xs ys]
 
 runEditDistancem xs ys = startEvalMemo $ editDistancem xs ys
+
+
+-- | Travelling salesman problem
+tsp gph mp t ss
+    | ss == (mp ! t) = return (gph ! (1,t))
+    | otherwise = do
+  krs <- mapM (\k -> for2 memo (tsp gph mp) k ss' >>= \r -> return (k,r)) (elms ss')
+  return $ minimum [ r + gph ! (k,t) | (k,r) <- krs]
+   where
+     ss' = ss - (mp ! t)
+
+elms ss = go 1 ss
+    where
+      go b 1 = [b]
+      go b ss =
+          case ss `quotRem` 2 of
+            (q,1) -> b : go (b+1) q
+            (q,0) -> go (b+1) q
+
+calcTsp dim =  do
+  rs <- mapM (\k -> for2 memo (tsp gph mp) k (ss-1)) [2..n]
+  return $ minimum [ r + gph ! (k,1) | (r,k) <- zip rs [2..n]]
+    where
+      n = dim^2
+      cities = [(x*dim+y+1, (fromIntegral x, fromIntegral y))
+                    | x <- [0..dim-1], y <- [0..dim-1]]
+      dists  = [((c1,c2), sqrt ((x1-x2)^2 + (y1-y2)^2))
+                    | (c1,(x1,y1)) <- cities, (c2,(x2,y2)) <- cities]
+      gph = array ((1,1),(n,n)) dists :: UArray (Int,Int) Float
+      mp = array (1,n) [(i,2^(i-1)) | i <- [1..n]] :: UArray Int Int
+      ss = 2^n-1
+
+evalTsp = startEvalMemo . calcTsp
+
+evalTspSTU dim = evalSTUArrayMemo (calcTsp dim) ((1,1),(n,2^n-1))
+    where n = dim^2
+
+
+-- | Different MemoCache
+--   The same monadic funtion can be called using different MonadeCache implementation
+ 
+fibm :: (Eq n, Num n, MonadMemo n n m) => n -> m n
+fibm 0 = return 0
+fibm 1 = return 1
+fibm n = do
+  n1 <- memo fibm (n-1)
+  n2 <- memo fibm (n-2)
+  return (n1+n2)
+
+
+evalFibm :: Integer -> Integer
+evalFibm = startEvalMemo . fibm
+
+evalFibmIM :: Int -> Int
+evalFibmIM n = evalMemoState (fibm n) IM.empty
+
+evalFibmSTA :: Integer -> Integer
+evalFibmSTA n = evalSTArrayMemo (fibm n) (0,n)
+
+evalFibmIOA :: Integer -> IO Integer
+evalFibmIOA n = evalIOArrayMemoM (fibm n) (0,n)
+
+evalFibmIOUA :: Int -> IO Int
+evalFibmIOUA n = evalUArrayMemoM (fibm n) (0,n) 
+
+runFibmIOUA :: Int -> IO (Int, UArray Int Int)
+runFibmIOUA n = runUArrayMemoM (fibm n) (0,n) 
+
+evalFibmSTUA :: Int -> Int
+evalFibmSTUA n = evalSTUArrayMemo (fibm n) (0,n)
+
+runFibmSTUA :: Int -> (Int, UArray Int Int)
+runFibmSTUA n = runSTUArrayMemo (fibm n) (0,n)

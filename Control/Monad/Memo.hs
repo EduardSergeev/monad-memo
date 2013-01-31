@@ -17,6 +17,8 @@ module Control.Monad.Memo (
     module Control.Monad,
     module Control.Monad.Trans,
     module Data.MapLike,
+    module Data.MaybeLike,
+    module Data.Nullable,
     -- * MonadMemo class
     MonadMemo(..),
     -- * Generalized Memo monad
@@ -39,6 +41,26 @@ module Control.Monad.Memo (
     evalMemoT,
     startRunMemoT,
     startEvalMemoT,
+
+    -- * Array-based Memo monad
+    ArrayCache,
+    runArrayMemoM,
+    evalArrayMemoM,
+    runUArrayMemoM,
+    evalUArrayMemoM,
+    runSTArrayMemoM,
+    evalSTArrayMemoM,
+    runSTArrayMemo,
+    evalSTArrayMemo,
+    runSTUArrayMemoM,
+    runSTUArrayMemo,
+    evalSTUArrayMemoM,
+    evalSTUArrayMemo,
+    runIOArrayMemoM,
+    evalIOArrayMemoM,
+    runIOUArrayMemoM,
+    evalIOUArrayMemoM,
+
     -- * Adapter for memoization of multi-argument functions
     for2,
     for3,
@@ -65,21 +87,23 @@ module Control.Monad.Memo (
 
 import Control.Monad.Memo.Class
 
---import Control.Monad.Trans.Memo.Strict (
---    MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
---    Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
-
-import Control.Monad.Trans.Memo.State -- (
---    MemoT(..), runMemoT, evalMemoT,
---    Memo, runMemo, evalMemo )
+import Control.Monad.Trans.Memo.State
 
 import Control.Monad.Trans.Memo.Map
 
+import Control.Monad.Trans.Memo.Array
+import Control.Monad.Trans.Memo.Array.Instances
+
 import Data.MapLike
+import Data.MaybeLike
+import Data.MaybeLike.Instances
+import Data.Nullable
+import Data.Nullable.Instances
 
 
 import Control.Monad
 import Control.Monad.Trans
+
 
 {- $fibExample
 Memoization can be specified whenever monadic computation is taking place.

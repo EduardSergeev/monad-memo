@@ -67,6 +67,7 @@ class Monad m => MonadMemo k v m | m -> k, m -> v where
     memo :: (k -> m v) -> k -> m v
 
 -- | Memoization for the current transformer in stack using a cache from an arbitrary transformer down the stack
+{-# INLINE memoln #-}
 memoln :: (MonadCache k2 v m1, Monad m1, Monad m2) =>
            (forall a.m1 a -> m2 a) -> (k1 -> k2)  -> (k1 -> m2 v) -> k1 -> m2 v
 memoln fl fk f k = do
@@ -93,6 +94,7 @@ for4 m f a b c d = m (\(a,b,c,d) -> f a b c d) (a,b,c,d)
 
 
 -- | Uses current monad's memoization cache
+{-# INLINE memol0 #-}
 memol0
     :: (MonadCache k v m, Monad m) =>
        (k -> m v) -> k -> m v
@@ -100,6 +102,7 @@ memol0 = memoln id id
 
 
 -- | Uses the 1st transformer in stack for memoization cache
+{-# INLINE memol1 #-}
 memol1
     :: (MonadTrans t1,
         MonadCache k v m,
@@ -109,6 +112,7 @@ memol1 = memoln lift id
 
 
 -- | Uses the 2nd transformer in stack for memoization cache
+{-# INLINE memol2 #-}
 memol2
   :: (MonadTrans t1,
       MonadTrans t2,
@@ -119,6 +123,7 @@ memol2
 memol2 = memoln (lift . lift) id
 
 -- | Uses the 3rd transformer in stack for memoization cache
+{-# INLINE memol3 #-}
 memol3
   :: (MonadTrans t1,
       MonadTrans t2,
@@ -132,6 +137,7 @@ memol3 = memoln (lift.lift.lift) id
 
 
 -- | Uses the 4th transformer in stack for memoization cache
+{-# INLINE memol4 #-}
 memol4
   :: (MonadTrans t1,
       MonadTrans t2,

@@ -6,3 +6,6 @@
 0.3.0
 - Added generalized MemoStateT transformer (to host any Data.MapLike cache-container)
 - MemoT is now MemoStateT instantiated with Data.Map
+
+0.4.0
+- ArrayCache: mutable array-based MonadCache for top performance

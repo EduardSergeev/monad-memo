@@ -6,6 +6,7 @@ module Control.Monad.Memo.Test
 ) where
 
 import Test.QuickCheck
+import Test.QuickCheck.Monadic
 import System.Random
 
 import Control.Monad.Memo
@@ -15,15 +16,19 @@ import Control.Monad.State
 import Control.Monad.Cont
 import Control.Monad.List
 
+import qualified Data.IntMap as IM
+
 import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 
+smallUpperBound :: Num n => n
+smallUpperBound = 10
 
 newtype SmallInt n = SmallInt { toInt::n } deriving Show
 
 instance (Num n, Random n) => Arbitrary (SmallInt n) where
-    arbitrary = fmap SmallInt $ choose (0,10)
+    arbitrary = fmap SmallInt $ choose (0,smallUpperBound)
 
 newtype SmallList a = SmallList { toList::[a] } deriving Show
 
@@ -33,6 +38,22 @@ instance Arbitrary a => Arbitrary (SmallList a) where
       ls <- arbitrary
       return $ SmallList $ take n ls 
 
+medUpperBound :: Num n => n
+medUpperBound = 1000
+
+newtype MedInt n = MedInt { medToInt::n } deriving Show
+
+instance (Num n, Random n) => Arbitrary (MedInt n) where
+    arbitrary = fmap MedInt $ choose (0,medUpperBound)
+
+
+-- | Plain monadic definition
+fibm 0 = return 0
+fibm 1 = return 1
+fibm n = do
+  f1 <- memo fibm (n-1)
+  f2 <- memo fibm (n-2)
+  return (f1+f2)
 
 
 -- | With ReaderT
@@ -60,9 +81,17 @@ fibmr n = do
 
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
 
+runFibmrST r n = runSTArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
+
 prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_ReaderEqv r n =
-    ((`runReader`(toInt r)) . fibr  $ (toInt n)) == (startEvalMemo . (`runReaderT`(toInt r)) . fibmr $ (toInt n))
+    ((`runReader`(toInt r)) . fibr  $ (toInt n)) ==
+    (startEvalMemo . (`runReaderT`(toInt r)) . fibmr $ (toInt n))
+
+prop_ReaderSTEqv :: SmallInt Integer -> SmallInt Integer -> Bool
+prop_ReaderSTEqv (SmallInt r) (SmallInt n) =
+    runReader (fibr n) r ==
+    evalSTArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
 
 
 -- | With WriterT
@@ -106,8 +135,14 @@ fibmc n = do
 
 prop_ContEqv :: SmallInt Int -> Bool
 prop_ContEqv n =
-    ((`runCont`id) . fibc . toInt $ n) == (startEvalMemo . (`runContT`return) . fibmc . toInt $ n)
+    ((`runCont`id) . fibc . toInt $ n) ==
+    (startEvalMemo . (`runContT`return) . fibmc . toInt $ n)
 
+
+prop_ContSTUEqv :: SmallInt Int -> Bool
+prop_ContSTUEqv (SmallInt n) =
+    (runCont (fibc n) id :: Int) ==
+    evalSTUArrayMemo (runContT (fibmc n) return) (0,n)
 
 
 -- | With StateT
@@ -164,7 +199,7 @@ prop_ListEqv ls =
 -- | Mutual recursion
 f :: Int -> (Int,String)
 f 0 = (1,"+")
-f n =(g((n-1),fst(f (n-1))),"-" ++ snd(f (n-1)))
+f n = (g((n-1),fst(f (n-1))),"-" ++ snd(f (n-1)))
 g :: (Int, Int) -> Int
 g (0, m)  = m + 1
 g (n,m) = fst(f (n-1))-g((n-1),m)
@@ -234,17 +269,73 @@ prop_Mutual2GEqv sx sy = g (x,y) == evalGm2 x y
 
 
 
+-- | Different memo caches tests
+
+fibMap :: (Ord n, Num n, Num v) => n -> v
+fibMap = startEvalMemo . fibm 
+
+fibIntMap :: Int -> Int
+fibIntMap = (`evalMemoState`IM.empty) . fibm 
+
+fibSTA :: Integer -> Integer
+fibSTA n = evalSTArrayMemo (fibm n) (0,n)
+
+fibSTUA :: Int -> Int
+fibSTUA n = evalSTUArrayMemo (fibm n) (0,n)
+
+fibSTUAD :: Int -> Double
+fibSTUAD n = evalSTUArrayMemo (fibm n) (0,n)
+
+fibIOA :: Integer -> IO Integer
+fibIOA n = evalIOArrayMemoM (fibm n) (0,n)
+
+fibIOUA :: Int -> IO Int
+fibIOUA n = evalUArrayMemoM (fibm n) (0,n)
+
+
+prop_IntMapEqv :: MedInt Int -> Bool
+prop_IntMapEqv (MedInt n) = fibMap n == fibIntMap n
+
+prop_STAEqv :: MedInt Integer -> Bool
+prop_STAEqv (MedInt n) = fibMap n == fibSTA n
+
+prop_STUAEqv :: MedInt Int -> Bool
+prop_STUAEqv (MedInt n) = fibMap n == fibSTUA n
+
+prop_STUADEqv :: MedInt Int -> Bool
+prop_STUADEqv (MedInt n) = fibMap n == fibSTUA n
+
+
+prop_IOAEqv :: MedInt Integer -> Property
+prop_IOAEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOA n
+                           assert $ r == fibMap n
+
+prop_IOUAEqv :: MedInt Int -> Property
+prop_IOUAEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOUA n
+                           assert $ r == fibMap n
 
 tests = [
         testGroup "Transformers" [
-                       testProperty "ReaderEqv"  prop_ReaderEqv,
-                       testProperty "WriterEqv"  prop_WriterEqv,
-                       testProperty "ContEqv"    prop_ContEqv,
-                       testProperty "ListEqv"    prop_ListEqv,
-                       testProperty "StateEqv"   prop_StateEqv
+                       testProperty "ReaderEqv"         prop_ReaderEqv,
+                       testProperty "ReaderSTEqv"       prop_ReaderSTEqv,
+                       testProperty "WriterEqv"         prop_WriterEqv,
+                       testProperty "ContEqv"           prop_ContEqv,
+                       testProperty "ContSTUEqv"        prop_ContSTUEqv,
+                       testProperty "ListEqv"           prop_ListEqv,
+                       testProperty "StateEqv"          prop_StateEqv
                       ],
         testGroup "Others" [
                        testProperty "MutualFGEqv"       prop_MutualFEqv,
                        testProperty "MutualCurryFGEqv"  prop_Mutual2FEqv
-                       ]
+                       ],
+        testGroup "Different memo-caches" [
+                       testProperty "Data.IntMap cache" prop_IntMapEqv,
+                       testProperty "STArray cache"     prop_STAEqv,
+                       testProperty "STUArray cache"    prop_STUAEqv,
+                       testProperty "STUArray Double"   prop_STUADEqv,
+                       testProperty "IOArray cache"     prop_IOAEqv,
+                       testProperty "IOUArray cache"    prop_IOUAEqv
+                      ]
     ]

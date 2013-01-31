@@ -4,7 +4,7 @@ Name:                monad-memo
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.3.0
+Version:             0.4.0
 
 -- A short (one-line) description of the package.
 Synopsis:            Memoization monad transformer
@@ -14,7 +14,7 @@ Description:        Memoization monad transformer supporting mutual recursive fu
 		    and most of the standard monad transformers        
 
 -- URL for the project homepage or repository.
-Homepage:         http://code.google.com/p/monad-memo
+Homepage:         https://github.com/EduardSergeev/monad-memo
 
 -- The license under which the package is released.
 License:             BSD3
@@ -44,8 +44,8 @@ Extra-source-files:
 	CHANGES
 
 source-repository head
-  type:		  svn
-  location:	  http://monad-memo.googlecode.com/svn/trunk/
+  type:                git
+  location:	  https://github.com/EduardSergeev/monad-memo.git
 
 Flag examples
   description: Builds examples
@@ -55,31 +55,39 @@ Flag examples
 Library
   default-language:	Haskell2010
   build-depends:
-     base >= 3.0 && < 5,
+     base >= 3.0,
      mtl >= 2.0,
      transformers >= 0.2,
-     containers >= 0.3
+     containers >= 0.3,
+     array >= 0.4
 
   exposed-modules:
      Control.Monad.Memo,
      Control.Monad.Memo.Class,
      Control.Monad.Trans.Memo.State,
      Control.Monad.Trans.Memo.Map,
+     Control.Monad.Trans.Memo.Array,
+     Control.Monad.Trans.Memo.Array.Instances,
      Data.MapLike,
-     Data.MapLike.Instances
+     Data.MapLike.Instances,
+     Data.Nullable,
+     Data.Nullable.Instances,
+     Data.MaybeLike,
+     Data.MaybeLike.Instances
 
   if flag(examples)
      exposed-modules: Control.Monad.Memo.Example
 
 Test-Suite tests
   default-language:	Haskell2010
-  type:			exitcode-stdio-1.0
+  type:		exitcode-stdio-1.0
   main-is:		Tests.hs
   build-depends: 
-     base >= 3.0 && < 5,
+     base >= 3.0,
      mtl >= 2.0,
      transformers >= 0.2,
      containers >= 0.3,
+     array >= 0.4,
      random >= 1.0,
      QuickCheck >= 2.0,
      test-framework-quickcheck2 >= 0.2.9,
