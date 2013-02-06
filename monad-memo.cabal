@@ -59,7 +59,9 @@ Library
      mtl >= 2.0,
      transformers >= 0.2,
      containers >= 0.3,
-     array >= 0.4
+     array >= 0.4,
+     vector >= 0.7,
+     primitive >= 0.3
 
   exposed-modules:
      Control.Monad.Memo,
@@ -68,6 +70,8 @@ Library
      Control.Monad.Trans.Memo.Map,
      Control.Monad.Trans.Memo.Array,
      Control.Monad.Trans.Memo.Array.Instances,
+     Control.Monad.Trans.Memo.Vector,
+     Control.Monad.Trans.Memo.Vector.Instances,
      Data.MapLike,
      Data.MapLike.Instances,
      Data.Nullable,
@@ -88,6 +92,8 @@ Test-Suite tests
      transformers >= 0.2,
      containers >= 0.3,
      array >= 0.4,
+     vector >= 0.7,
+     primitive >= 0.3,
      random >= 1.0,
      QuickCheck >= 2.0,
      test-framework-quickcheck2 >= 0.2.9,

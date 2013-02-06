@@ -62,6 +62,26 @@ module Control.Monad.Memo (
     runIOUArrayMemoM,
     evalIOUArrayMemoM,
 
+    -- * Vector-based Memo monad
+    VectorCache(..),
+    VectorMemo(..),
+    -- ** VectorCache for boxed types
+    STVectorCache,
+    runSTVectorMemoM,
+    evalSTVectorMemoM,
+    STVectorMemo(..),
+    IOVectorCache,
+    runIOVectorMemoM,
+    evalIOVectorMemoM,
+    -- ** VectorCache for unboxed types
+    STUVectorCache,
+    runSTUVectorMemoM,
+    evalSTUVectorMemoM,
+    STUVectorMemo(..),
+    IOUVectorCache,
+    runIOUVectorMemoM,
+    evalIOUVectorMemoM,
+
     -- * Adapter for memoization of multi-argument functions
     for2,
     for3,
@@ -97,6 +117,9 @@ import Control.Monad.Trans.Memo.Map
 
 import Control.Monad.Trans.Memo.Array
 import Control.Monad.Trans.Memo.Array.Instances
+
+import Control.Monad.Trans.Memo.Vector
+import Control.Monad.Trans.Memo.Vector.Instances
 
 import Data.MapLike
 import Data.MaybeLike

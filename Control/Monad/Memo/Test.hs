@@ -48,6 +48,7 @@ instance (Num n, Random n) => Arbitrary (MedInt n) where
 
 
 -- | Plain monadic definition
+{-# INLINE fibm #-}
 fibm 0 = return 0
 fibm 1 = return 1
 fibm n = do
@@ -318,6 +319,36 @@ prop_IOUAEqv (MedInt n) = monadicIO $ do
                            r <- run $ fibIOUA n
                            assert $ r == fibMap n
 
+
+fibSTV :: Int -> Integer
+fibSTV n = evalSTVectorMemo (fibm n) n
+
+prop_STVEqv :: MedInt Int -> Bool
+prop_STVEqv (MedInt n) = fibMap n == fibSTV n
+
+fibSTUV :: Int -> Int
+fibSTUV n = evalSTUVectorMemo (fibm n) n
+
+prop_STUVEqv :: MedInt Int -> Bool
+prop_STUVEqv (MedInt n) = fibMap n == fibSTUV n
+
+fibIOV :: Int -> IO Integer
+fibIOV n = evalIOVectorMemoM (fibm n) n
+
+prop_IOVEqv :: MedInt Int -> Property
+prop_IOVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOV n
+                           assert $ r == fibMap n
+
+fibIOUV :: Int -> IO Int
+fibIOUV n = evalIOUVectorMemoM (fibm n) n
+
+prop_IOUVEqv :: MedInt Int -> Property
+prop_IOUVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOUV n
+                           assert $ r == fibMap n
+
+
 tests = [
         testGroup "Transformers" [
                        testProperty "ReaderEqv"         prop_ReaderEqv,
@@ -333,11 +364,19 @@ tests = [
                        testProperty "MutualCurryFGEqv"  prop_Mutual2FEqv
                        ],
         testGroup "Different memo-caches" [
-                       testProperty "Data.IntMap cache" prop_IntMapEqv,
-                       testProperty "STArray cache"     prop_STAEqv,
-                       testProperty "STUArray cache"    prop_STUAEqv,
-                       testProperty "STUArray Double"   prop_STUADEqv,
-                       testProperty "IOArray cache"     prop_IOAEqv,
-                       testProperty "IOUArray cache"    prop_IOUAEqv
+                       testGroup "ArrayCache" [
+                                      testProperty "Data.IntMap cache" prop_IntMapEqv,
+                                      testProperty "STArray cache"     prop_STAEqv,
+                                      testProperty "STUArray cache"    prop_STUAEqv,
+                                      testProperty "STUArray Double"   prop_STUADEqv,
+                                      testProperty "IOArray cache"     prop_IOAEqv,
+                                      testProperty "IOUArray cache"    prop_IOUAEqv
+                                     ],
+                       testGroup "VectorCache" [
+                                      testProperty "STVector cache"    prop_STVEqv,
+                                      testProperty "STUVector cache"   prop_STUVEqv,
+                                      testProperty "IOVector cache"    prop_IOVEqv,
+                                      testProperty "IOUVector cache"   prop_IOUVEqv
+                                     ]
                       ]
     ]

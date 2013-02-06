@@ -80,6 +80,7 @@ module Control.Monad.Memo.Example
          evalTspSTU,
 
          -- * Different MonadCache for the same monadic function
+         -- ** ArrayCache-based
          evalFibmIM,
          evalFibmSTA,
          evalFibmIOA,
@@ -88,8 +89,11 @@ module Control.Monad.Memo.Example
          runFibmIOUA,
          evalFibmSTUA,
          runFibmSTUA,
+         -- ** AVectorCache-based
          evalFibmSTV,
-         evalFibmSTUV
+         evalFibmSTUV,
+         evalFibmIOV,
+         evalFibmIOUV
 
 ) where
 
@@ -479,3 +483,18 @@ evalFibmSTUA3 n = evalSTUArrayMemo (fibm n) (0,n)
 
 runFibmSTUA :: Int -> (Int, UArray Int Int)
 runFibmSTUA n = runSTUArrayMemo (fibm n) (0,n)
+
+evalFibmSTV :: Int -> Integer
+evalFibmSTV n = evalSTVectorMemo (fibm n) n
+
+evalFibmIOV :: Int -> IO Integer
+evalFibmIOV n = evalIOVectorMemoM (fibm n) n
+
+evalFibmSTUV :: Int -> Int
+evalFibmSTUV n = evalSTUVectorMemo (fibm n) n
+
+evalFibmSTUV2 :: Int -> Int
+evalFibmSTUV2 n = runST $ evalSTUVectorMemoM (fibm n) n
+
+evalFibmIOUV :: Int -> IO Int
+evalFibmIOUV n = evalIOUVectorMemoM (fibm n) n
