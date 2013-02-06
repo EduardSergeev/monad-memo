@@ -141,8 +141,8 @@ prop_ContEqv n =
 
 prop_ContSTUEqv :: SmallInt Int -> Bool
 prop_ContSTUEqv (SmallInt n) =
-    (runCont (fibc n) id :: Int) ==
-    evalSTUArrayMemo (runContT (fibmc n) return) (0,n)
+    (runCont (fibc n) id) ==
+    evalSTUArrayMemo (runContT (fibmc n) return :: STUArrayCache s Int Int Int) (0,n)
 
 
 -- | With StateT
@@ -166,7 +166,8 @@ fibms n = do
 
 prop_StateEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_StateEqv s n =
-    ((`runState`(toInt s)) . fibs . toInt $ n) == (startEvalMemo . (`runStateT`(toInt s)) . fibms . toInt $ n)
+    ((`runState`(toInt s)) . fibs . toInt $ n) ==
+    (startEvalMemo . (`runStateT`(toInt s)) . fibms . toInt $ n)
 
 
 
@@ -193,7 +194,8 @@ unfringem as = do
 
 prop_ListEqv :: SmallList Char -> Bool
 prop_ListEqv ls =
-    unfringe (toList ls) == (startEvalMemo . runListT . unfringem $ (toList ls))
+    unfringe (toList ls) ==
+    (startEvalMemo . runListT . unfringem $ (toList ls))
 
 
 -- | Mutual recursion
@@ -290,7 +292,7 @@ fibIOA :: Integer -> IO Integer
 fibIOA n = evalIOArrayMemoM (fibm n) (0,n)
 
 fibIOUA :: Int -> IO Int
-fibIOUA n = evalUArrayMemoM (fibm n) (0,n)
+fibIOUA n = evalIOUArrayMemoM (fibm n) (0,n)
 
 
 prop_IntMapEqv :: MedInt Int -> Bool

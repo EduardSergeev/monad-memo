@@ -43,21 +43,22 @@ module Control.Monad.Memo (
     startEvalMemoT,
 
     -- * Array-based Memo monad
-    ArrayCache,
-    runArrayMemoM,
-    evalArrayMemoM,
-    runUArrayMemoM,
-    evalUArrayMemoM,
+    ArrayCache(..),
+    ArrayMemo(..),
+    -- ** ArrayCache for boxed types
+    STArrayCache,
     runSTArrayMemoM,
     evalSTArrayMemoM,
-    runSTArrayMemo,
-    evalSTArrayMemo,
-    runSTUArrayMemoM,
-    runSTUArrayMemo,
-    evalSTUArrayMemoM,
-    evalSTUArrayMemo,
+    STArrayMemo(..),
+    IOArrayCache,
     runIOArrayMemoM,
     evalIOArrayMemoM,
+    -- ** ArrayCache for unboxed types
+    STUArrayCache,
+    runSTUArrayMemoM,
+    evalSTUArrayMemoM,
+    STUArrayMemo(..),
+    IOUArrayCache,
     runIOUArrayMemoM,
     evalIOUArrayMemoM,
 
@@ -83,6 +84,9 @@ module Control.Monad.Memo (
 
     -- * Example 4: Memoization of multi-argument function
     -- $multiExample
+
+    -- * Example 5: Alternative memo caches
+    -- $arrayCacheExample
     ) where
 
 import Control.Monad.Memo.Class
@@ -224,5 +228,26 @@ For two-argument function we can use 'for2' function adapter:
 >
 >evalAckm :: (Num n, Ord n) => n -> n -> n
 >evalAckm n m = startEvalMemo $ ackm n m
+
+-}
+
+{- $arrayCacheExample
+Given a monadic function definition it is often possible to execute it using different memo-cache ('MonadCache') implementations. For example 'ArrayCache' when used can dramatically reduce function computation time and memory usage.
+
+For example the same Fibonacci function:
+
+>fibm 0 = return 0
+>fibm 1 = return 1
+>fibm n = (+) <$> memo fibm (n-1) <*> memo fibm (n-2)
+
+can easily be run using mutable array in 'Control.Monad.ST.ST' monad:
+
+>evalFibmSTA :: Integer -> Integer
+>evalFibmSTA n = runST $ evalSTArrayMemoM (fibm n) (0,n)
+
+or, if we change its return type to a primitive (unboxed) value, we can use even more efficient unboxed array 'Data.Array.ST.STUArray':
+
+>evalFibmSTUA :: Integer -> Double
+>evalFibmSTUA n = evalSTUArrayMemo (fibm n) (0,n)
 
 -}

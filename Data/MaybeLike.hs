@@ -27,7 +27,7 @@ module Data.MaybeLike
 import Data.Bool
 import qualified Data.Maybe as M
 
--- | An abstract interface to a type which may not have any value
+-- | An abstract interface to a type which may not have a value
 class MaybeLike a v | a -> v where
     nothing :: a
     isNothing :: a -> Bool

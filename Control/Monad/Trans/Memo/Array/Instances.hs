@@ -7,7 +7,7 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, functional dependencies)
 
-Defines default instances of `UArrayMemo` and `STUArrayMemo`
+Default instances of `ArrayMemo`, `STArrayMemo` and `STUArrayMemo`
 
 -}
 
@@ -31,277 +31,147 @@ import Data.Bool
 import Data.Char
 import Data.Int
 import Data.Word
+import Data.Maybe
 
 import Data.Array.ST
 import Data.Array.IO
+import Data.Array.Unboxed
 
 import Data.Nullable
 import Data.MaybeLike
 
 import System.IO
+import Control.Monad
 import Control.Monad.ST
 
 import Control.Monad.Trans.Memo.Array
 
-instance (Ix k, MaybeLike Char Char, Nullable Char) =>
-    UArrayMemo k Char IOUArray Char IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int Int, Nullable Int) =>
-    UArrayMemo k Int IOUArray Int IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
- 
-instance (Ix k, MaybeLike Int8 Int8, Nullable Int8) =>
-    UArrayMemo k Int8 IOUArray Int8 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int16 Int16, Nullable Int16) =>
-    UArrayMemo k Int16 IOUArray Int16 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int32 Int32, Nullable Int32) =>
-    UArrayMemo k Int32 IOUArray Int32 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int64 Int64, Nullable Int64) =>
-    UArrayMemo k Int64 IOUArray Int64 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word Word, Nullable Word) =>
-    UArrayMemo k Word IOUArray Word IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word8 Word8, Nullable Word8) =>
-    UArrayMemo k Word8 IOUArray Word8 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word16 Word16, Nullable Word16) =>
-    UArrayMemo k Word16 IOUArray Word16 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word32 Word32, Nullable Word32) =>
-    UArrayMemo k Word32 IOUArray Word32 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word64 Word64, Nullable Word64) =>
-    UArrayMemo k Word64 IOUArray Word64 IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Float Float, Nullable Float) =>
-    UArrayMemo k Float IOUArray Float IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Double Double, Nullable Double) =>
-    UArrayMemo k Double IOUArray Double IO where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
 
 
-instance (Ix k, MaybeLike Char Char, Nullable Char) =>
-    UArrayMemo k Char (STUArray s) Char (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
+instance (Ix k, MaybeLike (Maybe a) a, Nullable (Maybe a)) =>
+    ArrayMemo k a IOArray (Maybe a) IO where
+        {-# INLINE evalArrayMemoM #-}
+        evalArrayMemoM = evalArrayMemoMImpl
+        {-# INLINE runArrayMemoM #-}
+        runArrayMemoM = runArrayMemoMImpl
+
+instance (Ix k, MaybeLike (Maybe a) a, Nullable (Maybe a)) =>
+    ArrayMemo k a (STArray s) (Maybe a) (ST s) where
+        {-# INLINE evalArrayMemoM #-}
+        evalArrayMemoM = evalArrayMemoMImpl
+        {-# INLINE runArrayMemoM #-}
+        runArrayMemoM = runArrayMemoMImpl
+
+instance (Ix k, MaybeLike v v, Nullable v, MArray IOUArray v IO) =>
+    ArrayMemo k v IOUArray v IO where
+        {-# INLINE evalArrayMemoM #-}
+        evalArrayMemoM = evalArrayMemoMImpl
+        {-# INLINE runArrayMemoM #-}
+        runArrayMemoM = runArrayMemoMImpl
+
+instance (Ix k, MaybeLike v v, Nullable v, MArray (STUArray s) v (ST s)) =>
+    ArrayMemo k v (STUArray s) v (ST s) where
+        {-# INLINE evalArrayMemoM #-}
+        evalArrayMemoM = evalArrayMemoMImpl
+        {-# INLINE runArrayMemoM #-}
+        runArrayMemoM = runArrayMemoMImpl
+
+evalArrayMemoMImpl m lu = do
+  arr <- newArray lu null
+  evalArrayCache m arr
+
+runArrayMemoMImpl m lu = do
+  arr <- newArray lu null
+  a <- evalArrayCache m arr
+  return (a, arr)
 
 
-instance (Ix k, MaybeLike Int Int, Nullable Int) =>
-    UArrayMemo k Int (STUArray s) Int (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int8 Int8, Nullable Int8) =>
-    UArrayMemo k Int8 (STUArray s) Int8 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int16 Int16, Nullable Int16) =>
-    UArrayMemo k Int16 (STUArray s) Int16 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int32 Int32, Nullable Int32) =>
-    UArrayMemo k Int32 (STUArray s) Int32 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Int64 Int64, Nullable Int64) =>
-    UArrayMemo k Int64 (STUArray s) Int64 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word Word, Nullable Word) =>
-    UArrayMemo k Word (STUArray s) Word (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word8 Word8, Nullable Word8) =>
-    UArrayMemo k Word8 (STUArray s) Word8 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word16 Word16, Nullable Word16) =>
-    UArrayMemo k Word16 (STUArray s) Word16 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word32 Word32, Nullable Word32) =>
-    UArrayMemo k Word32 (STUArray s) Word32 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Word64 Word64, Nullable Word64) =>
-    UArrayMemo k Word64 (STUArray s) Word64 (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Float Float, Nullable Float) =>
-    UArrayMemo k Float (STUArray s) Float (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
-
-instance (Ix k, MaybeLike Double Double, Nullable Double) =>
-    UArrayMemo k Double (STUArray s) Double (ST s) where
-        {-# INLINE evalUArrayMemoM #-}
-        evalUArrayMemoM = evalArrayMemoM
-        {-# INLINE runUArrayMemoM #-}
-        runUArrayMemoM = runArrayMemoM
+instance Ix k => STArrayMemo k v (Maybe v) where
+    {-# INLINE evalSTArrayMemo #-}
+    evalSTArrayMemo m lu = runST $ evalArrayMemoM m lu
+    {-# INLINE runSTArrayMemo #-}
+    runSTArrayMemo m lu = runST $ runSTMemoImpl m lu
 
 
-instance (MaybeLike Char Char, Nullable Char) => STUArrayMemo Char where
+instance (Ix k, MaybeLike Char Char, Nullable Char) => STUArrayMemo k Char Char where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Int Int, Nullable Int) => STUArrayMemo Int where
+instance (Ix k, MaybeLike Int Int, Nullable Int) => STUArrayMemo k Int Int where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Int8 Int8, Nullable Int8) => STUArrayMemo Int8 where
+instance (Ix k, MaybeLike Int8 Int8, Nullable Int8) => STUArrayMemo k Int8 Int8 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Int16 Int16, Nullable Int16) => STUArrayMemo Int16 where
+instance (Ix k, MaybeLike Int16 Int16, Nullable Int16) => STUArrayMemo k Int16 Int16 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Int32 Int32, Nullable Int32) => STUArrayMemo Int32 where
+instance (Ix k, MaybeLike Int32 Int32, Nullable Int32) => STUArrayMemo k Int32 Int32 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Int64 Int64, Nullable Int64) => STUArrayMemo Int64 where
+instance (Ix k, MaybeLike Int64 Int64, Nullable Int64) => STUArrayMemo k Int64 Int64 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Word Word, Nullable Word) => STUArrayMemo Word where
+instance (Ix k, MaybeLike Word Word, Nullable Word) => STUArrayMemo k Word Word where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Word8 Word8, Nullable Word8) => STUArrayMemo Word8 where
+instance (Ix k, MaybeLike Word8 Word8, Nullable Word8) => STUArrayMemo k Word8 Word8 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Word16 Word16, Nullable Word16) => STUArrayMemo Word16 where
+instance (Ix k, MaybeLike Word16 Word16, Nullable Word16) => STUArrayMemo k Word16 Word16 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Word32 Word32, Nullable Word32) => STUArrayMemo Word32 where
+instance (Ix k, MaybeLike Word32 Word32, Nullable Word32) => STUArrayMemo k Word32 Word32 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Word64 Word64, Nullable Word64) => STUArrayMemo Word64 where
+instance (Ix k, MaybeLike Word64 Word64, Nullable Word64) => STUArrayMemo k Word64 Word64 where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Float Float, Nullable Float) => STUArrayMemo Float where
+instance (Ix k, MaybeLike Float Float, Nullable Float) => STUArrayMemo k Float Float where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
 
-instance (MaybeLike Double Double, Nullable Double) => STUArrayMemo Double where
+instance (Ix k, MaybeLike Double Double, Nullable Double) => STUArrayMemo k Double Double where
     {-# INLINE evalSTUArrayMemo #-}
-    evalSTUArrayMemo m lu = runST $ evalUArrayMemoM m lu
+    evalSTUArrayMemo m lu = runST $ evalArrayMemoM m lu
     {-# INLINE runSTUArrayMemo #-}
-    runSTUArrayMemo m lu = runST $ runUArrayMemoM m lu
+    runSTUArrayMemo m lu = runST $ runSTMemoImpl m lu
+
+runSTMemoImpl m lu = do
+      (a, arr) <- runArrayMemoM m lu
+      iarr <- freeze arr
+      return (a, iarr)
