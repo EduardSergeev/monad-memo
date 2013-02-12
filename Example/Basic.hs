@@ -7,13 +7,13 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, functional dependencies)
 
-Samples of usage of MemoT
+Some basic examples of 'monad-memo' usage
 
 -}
 
 {-# LANGUAGE FlexibleContexts #-}
 
-module Control.Monad.Memo.Example
+module Example.Basic
     (
          -- * Memoized Fibonacci number function
          fibm,
@@ -54,7 +54,7 @@ module Control.Monad.Memo.Example
          fibm2,
          evalFibM2,
 
-         -- * Fibonacci with Memo and Writer
+         -- * Fibonacci with `Memo` and `Writer`
          fibmw,
          evalFibmw,
 
@@ -80,8 +80,9 @@ module Control.Monad.Memo.Example
          evalTspSTU,
 
          -- * Different MonadCache for the same monadic function
-         -- ** ArrayCache-based
+         -- ** `Data.IntMap`-based
          evalFibmIM,
+         -- ** `ArrayCache`-based
          evalFibmSTA,
          evalFibmIOA,
          runFibmIOA,
@@ -89,7 +90,7 @@ module Control.Monad.Memo.Example
          runFibmIOUA,
          evalFibmSTUA,
          runFibmSTUA,
-         -- ** AVectorCache-based
+         -- ** `VectorCache`-based
          evalFibmSTV,
          evalFibmSTUV,
          evalFibmIOV,
@@ -109,6 +110,8 @@ import qualified Data.Map as M
 import qualified Data.IntMap as IM
 import Data.Array.ST
 import Data.Array.Unboxed
+import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as UV
 
 import Control.Applicative
 
@@ -263,8 +266,6 @@ evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
 
 
 -- | Here we use monomorphic type
---fibmw :: Integer -> WriterT String (Memo Integer (Integer,String)) Integer
---fibmw :: (Show n, Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
 fibmw 0 = "fib: 0" `trace` tell "0" >> return 0
 fibmw 1 = "fib: 1" `trace` tell "1" >> return 1
 fibmw n = ("fib: " ++ show n) `trace` do
@@ -278,15 +279,22 @@ evalFibmw = startEvalMemo . runWriterT . fibmw
 
 runFibmw = startRunMemo . runWriterT . fibmw
 
-evalFibmwST n = evalSTArrayMemo (runWriterT (fibmw n)) (0,n)
-runFibmwST n = runSTArrayMemo (runWriterT (fibmw n)) (0,n)
+evalFibmwSTA n = runST $ evalArrayMemo (runWriterT (fibmw n)) (0,n)
 
-evalFibmwIO n = evalIOArrayMemoM (runWriterT (fibmw n)) (0,n)
-runFibmwIO n = runIOArrayMemoM (runWriterT (fibmw n)) (0,n)
+evalFibmwSTV n = runST $ evalVectorMemo (runWriterT (fibmw n)) n
+
+runFibmwST :: Integer -> ((Integer,String), Array Integer (Maybe (Integer,String)))
+runFibmwST n = runST $ do
+   (a,arr) <- runArrayMemo (runWriterT (fibmw n)) (0,n)
+   iarr <- freeze arr
+   return (a,iarr)
+
+evalFibmwIO :: Integer -> IO (Integer, String)
+evalFibmwIO n = evalArrayMemo (runWriterT (fibmw n)) (0,n)
 
 
 -- | Can also be defined with polymorphic monad classes
---fibmc :: (Num t, Num b, MonadCont m, MonadMemo t b m) => t -> m b
+fibmc :: (Eq k, Num k, Show k, Num n, MonadCont m, MonadMemo k n m) => k -> m n
 fibmc 0 = "fib: 0" `trace` return 0
 fibmc 1 = "fib: 1" `trace` return 1
 fibmc n = ("fib: " ++ show n) `trace` do
@@ -301,13 +309,13 @@ evalFibmc = startEvalMemo . (`runContT`return) . fibmc
 runFibmc = startRunMemo . (`runContT`return) . fibmc
 
 evalFibmcIO :: Integer -> IO Integer
-evalFibmcIO n = (`evalIOArrayMemoM`(0,n)) . (`runContT`return) . fibmc $ n
+evalFibmcIO n = (`evalArrayMemo`(0,n)) . (`runContT`return) . fibmc $ n
 
 evalFibmcST :: Integer -> Integer
-evalFibmcST n = (`evalSTArrayMemo`(0,n)) $ (`runContT`return) $ fibmc n
+evalFibmcST n = runST $ (`evalArrayMemo`(0,n)) $ (`runContT`return) $ fibmc n
 
 
---fibmr :: (Eq t, Num t, Num a, MonadMemo t a m, MonadReader a m) => t -> m a
+fibmr :: (Eq k, Num k, Show k, Num n, MonadMemo k n m, MonadReader n m) => k -> m n
 fibmr 0 = "fib: 0" `trace` return 0
 fibmr 1 = "fib: 1" `trace` return 1
 fibmr 2 = "fib: 2" `trace` return 1
@@ -347,7 +355,7 @@ fibmi n = do
 
 
 -- | Ackerman function
--- ack :: Num n => n -> n -> n
+ack :: (Eq n, Num n) => n -> n -> n
 ack 0 n = n+1
 ack m 0 = ack (m-1) 1
 ack m n = ack (m-1) (ack m (n-1))
@@ -365,7 +373,7 @@ evalAckm n m = startEvalMemo $ ackm n m
 runAckm n m = startRunMemo $ ackm n m
 
 evalAckmST :: Int -> Int -> Int
-evalAckmST n m = evalSTUArrayMemo (ackm n m) ((0,0),(4,100000))
+evalAckmST n m = runST $ evalUArrayMemo (ackm n m) ((0,0),(4,100000))
 
 
 -- | Levensthein distance - recursive definition
@@ -423,14 +431,18 @@ calcTsp dim =  do
 
 evalTsp = startEvalMemo . calcTsp
 
-evalTspSTU dim = evalSTUArrayMemo (calcTsp dim) ((1,1),(n,2^n-1))
+evalTspSTU dim = runST $ evalUArrayMemo (calcTsp dim) ((1,1),(n,2^n-1))
+    where n = dim^2
+
+evalTspIOU :: Int -> IO Float
+evalTspIOU dim = evalUArrayMemo (calcTsp dim) ((1,1),(n,2^n-1))
     where n = dim^2
 
 
--- | Different MemoCache
+-- | Different `MonadCache` implementations
 --   The same monadic funtion can be called using different MonadeCache implementation
  
---fibm :: (Eq n, Num n, MonadMemo n n m) => n -> m n
+fibm :: (Eq k, Num k, Num n, MonadMemo k n m) => k -> m n
 fibm 0 = return 0
 fibm 1 = return 1
 fibm n = do
@@ -449,52 +461,63 @@ evalFibmIM :: Int -> Int
 evalFibmIM n = evalMemoState (fibm n) IM.empty
 
 evalFibmSTA :: Integer -> Integer
-evalFibmSTA n = runST $ evalSTArrayMemoM (fibm n) (0,n)
+evalFibmSTA n = runST $ evalArrayMemo (fibm n) (0,n)
 
-evalFibmSTA2 :: Integer -> Integer
-evalFibmSTA2 n = evalSTArrayMemo (fibm n) (0,n)
+runFibmSTA :: Integer -> (Integer, Array Integer (Maybe Integer))
+runFibmSTA n = runST $ do
+  (a,arr) <- runArrayMemo (fibm n) (0,n)
+  iarr <- freeze arr
+  return (a, iarr)
+
 
 evalFibmIOA :: Integer -> IO Integer
-evalFibmIOA n = evalIOArrayMemoM (fibm n) (0,n)
+evalFibmIOA n = evalArrayMemo (fibm n) (0,n)
 
 runFibmIOA :: Integer -> IO (Integer, Array Integer (Maybe Integer))
 runFibmIOA n = do
-  (r, arr) <- runIOArrayMemoM (fibm n) (0,n)
+  (r, arr) <- runArrayMemo (fibm n) (0,n)
   iarr <- freeze arr
   return (r, iarr)
 
 evalFibmIOUA :: Int -> IO Int
-evalFibmIOUA n = evalIOUArrayMemoM (fibm n) (0,n) 
+evalFibmIOUA n = evalUArrayMemo (fibm n) (0,n) 
 
 runFibmIOUA :: Int -> IO (Int, UArray Int Int)
 runFibmIOUA n = do
-  (r, arr) <- runIOUArrayMemoM (fibm n) (0,n)
+  (r, arr) <- runUArrayMemo (fibm n) (0,n)
   iarr <- freeze arr
   return (r, iarr)
 
 evalFibmSTUA :: Int -> Int
-evalFibmSTUA n = evalSTUArrayMemo (fibm n) (0,n)
-
-evalFibmSTUA2 :: Int -> Int
-evalFibmSTUA2 n = runST $ evalSTArrayMemoM (fibm n) (0,n)
-
-evalFibmSTUA3 :: Integer -> Double
-evalFibmSTUA3 n = evalSTUArrayMemo (fibm n) (0,n)
+evalFibmSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
 
 runFibmSTUA :: Int -> (Int, UArray Int Int)
-runFibmSTUA n = runSTUArrayMemo (fibm n) (0,n)
+runFibmSTUA n = runST $ do
+    (a,arr) <- runUArrayMemo (fibm n) (0,n)
+    iarr <- freeze arr
+    return (a,iarr)
+
 
 evalFibmSTV :: Int -> Integer
-evalFibmSTV n = evalSTVectorMemo (fibm n) n
+evalFibmSTV n = runST $ evalVectorMemo (fibm n) (n+1)
 
 evalFibmIOV :: Int -> IO Integer
-evalFibmIOV n = evalIOVectorMemoM (fibm n) n
+evalFibmIOV n = evalVectorMemo (fibm n) (n+1)
 
 evalFibmSTUV :: Int -> Int
-evalFibmSTUV n = evalSTUVectorMemo (fibm n) n
+evalFibmSTUV n = runST $ evalUVectorMemo (fibm n) (n+1)
 
-evalFibmSTUV2 :: Int -> Int
-evalFibmSTUV2 n = runST $ evalSTUVectorMemoM (fibm n) n
+runFibmSTUV :: Int -> (Int, UV.Vector Int)
+runFibmSTUV n = runST $ do
+    (a,vec) <- runUVectorMemo (fibm n) (n+1)
+    ivec <- UV.freeze vec
+    return (a,ivec)
 
 evalFibmIOUV :: Int -> IO Int
-evalFibmIOUV n = evalIOUVectorMemoM (fibm n) n
+evalFibmIOUV n = evalUVectorMemo (fibm n) (n+1)
+
+runFibmIOUV :: Int -> IO (Int, UV.Vector Int)
+runFibmIOUV n = do
+  (a, vec) <- runUVectorMemo (fibm n) (n+1)
+  ivec <- UV.freeze vec
+  return (a, ivec)

@@ -18,7 +18,6 @@ module Control.Monad.Memo (
     module Control.Monad.Trans,
     module Data.MapLike,
     module Data.MaybeLike,
-    module Data.Nullable,
     -- * MonadMemo class
     MonadMemo(..),
     -- * Generalized Memo monad
@@ -42,45 +41,26 @@ module Control.Monad.Memo (
     startRunMemoT,
     startEvalMemoT,
 
+
+    -- * Generic mutable memo cache
+    Mutable(..),
+    MutableCache(..),
+
     -- * Array-based Memo monad
-    ArrayCache(..),
-    ArrayMemo(..),
     -- ** ArrayCache for boxed types
-    STArrayCache,
-    runSTArrayMemoM,
-    evalSTArrayMemoM,
-    STArrayMemo(..),
-    IOArrayCache,
-    runIOArrayMemoM,
-    evalIOArrayMemoM,
+    ArrayCache,
+    ArrayMemo(..),
     -- ** ArrayCache for unboxed types
-    STUArrayCache,
-    runSTUArrayMemoM,
-    evalSTUArrayMemoM,
-    STUArrayMemo(..),
-    IOUArrayCache,
-    runIOUArrayMemoM,
-    evalIOUArrayMemoM,
+    UArrayCache,
+    UArrayMemo(..),
 
     -- * Vector-based Memo monad
-    VectorCache(..),
-    VectorMemo(..),
     -- ** VectorCache for boxed types
-    STVectorCache,
-    runSTVectorMemoM,
-    evalSTVectorMemoM,
-    STVectorMemo(..),
-    IOVectorCache,
-    runIOVectorMemoM,
-    evalIOVectorMemoM,
+    VectorCache,
+    VectorMemo(..),
     -- ** VectorCache for unboxed types
-    STUVectorCache,
-    runSTUVectorMemoM,
-    evalSTUVectorMemoM,
-    STUVectorMemo(..),
-    IOUVectorCache,
-    runIOUVectorMemoM,
-    evalIOUVectorMemoM,
+    UVectorCache,
+    UVectorMemo(..),
 
     -- * Adapter for memoization of multi-argument functions
     for2,
@@ -115,18 +95,15 @@ import Control.Monad.Trans.Memo.State
 
 import Control.Monad.Trans.Memo.Map
 
-import Control.Monad.Trans.Memo.Array
-import Control.Monad.Trans.Memo.Array.Instances
-
-import Control.Monad.Trans.Memo.Vector
-import Control.Monad.Trans.Memo.Vector.Instances
+import Control.Monad.Memo.Mutable
+import Control.Monad.Memo.Mutable.Array
+import Control.Monad.Memo.Mutable.Array.Instances
+import Control.Monad.Memo.Mutable.Vector
+import Control.Monad.Memo.Mutable.Vector.Instances
 
 import Data.MapLike
 import Data.MaybeLike
 import Data.MaybeLike.Instances
-import Data.Nullable
-import Data.Nullable.Instances
-
 
 import Control.Monad
 import Control.Monad.Trans
@@ -266,11 +243,21 @@ For example the same Fibonacci function:
 can easily be run using mutable array in 'Control.Monad.ST.ST' monad:
 
 >evalFibmSTA :: Integer -> Integer
->evalFibmSTA n = runST $ evalSTArrayMemoM (fibm n) (0,n)
+>evalFibmSTA n = runST $ evalArrayMemo (fibm n) (0,n)
 
 or, if we change its return type to a primitive (unboxed) value, we can use even more efficient unboxed array 'Data.Array.ST.STUArray':
 
 >evalFibmSTUA :: Integer -> Double
->evalFibmSTUA n = evalSTUArrayMemo (fibm n) (0,n)
+>evalFibmSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
+
+Finally if we want to achieve the best performance within monad-memo, we can switch to unboxed `Vector`-based `MemoCache` (vectors support only `Int` as a key so we have to change the type):
+
+>evalFibmSTUV :: Int -> Double
+>evalFibmSTUV n = runST $ evalUVectorMemo (fibm n) (n+1)
+
+Note that `IO` monad can be used instead of `Control.Monad.ST.ST`:
+
+>evalFibmIOUV :: Int -> IO Double
+>evalFibmIOUV n = evalUVectorMemo (fibm n) (n+1)
 
 -}

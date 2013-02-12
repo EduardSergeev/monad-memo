@@ -15,6 +15,7 @@ import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad.Cont
 import Control.Monad.List
+import Control.Monad.ST
 
 import qualified Data.IntMap as IM
 
@@ -82,7 +83,7 @@ fibmr n = do
 
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
 
-runFibmrST r n = runSTArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
+runFibmrST r n = runST $ evalArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
 
 prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_ReaderEqv r n =
@@ -92,7 +93,7 @@ prop_ReaderEqv r n =
 prop_ReaderSTEqv :: SmallInt Integer -> SmallInt Integer -> Bool
 prop_ReaderSTEqv (SmallInt r) (SmallInt n) =
     runReader (fibr n) r ==
-    evalSTArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
+    runST (evalArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n)))
 
 
 -- | With WriterT
@@ -142,8 +143,8 @@ prop_ContEqv n =
 
 prop_ContSTUEqv :: SmallInt Int -> Bool
 prop_ContSTUEqv (SmallInt n) =
-    (runCont (fibc n) id) ==
-    evalSTUArrayMemo (runContT (fibmc n) return :: STUArrayCache s Int Int Int) (0,n)
+    (runCont (fibc n) id :: Int) ==
+    (runST $ (`evalUArrayMemo`(0,n)) . (`runContT`return) . fibmc $ n)
 
 
 -- | With StateT
@@ -281,19 +282,19 @@ fibIntMap :: Int -> Int
 fibIntMap = (`evalMemoState`IM.empty) . fibm 
 
 fibSTA :: Integer -> Integer
-fibSTA n = evalSTArrayMemo (fibm n) (0,n)
+fibSTA n = runST $ evalArrayMemo (fibm n) (0,n)
 
 fibSTUA :: Int -> Int
-fibSTUA n = evalSTUArrayMemo (fibm n) (0,n)
+fibSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
 
 fibSTUAD :: Int -> Double
-fibSTUAD n = evalSTUArrayMemo (fibm n) (0,n)
+fibSTUAD n = runST $ evalUArrayMemo (fibm n) (0,n)
 
 fibIOA :: Integer -> IO Integer
-fibIOA n = evalIOArrayMemoM (fibm n) (0,n)
+fibIOA n = evalArrayMemo (fibm n) (0,n)
 
 fibIOUA :: Int -> IO Int
-fibIOUA n = evalIOUArrayMemoM (fibm n) (0,n)
+fibIOUA n = evalUArrayMemo (fibm n) (0,n)
 
 
 prop_IntMapEqv :: MedInt Int -> Bool
@@ -321,19 +322,19 @@ prop_IOUAEqv (MedInt n) = monadicIO $ do
 
 
 fibSTV :: Int -> Integer
-fibSTV n = evalSTVectorMemo (fibm n) n
+fibSTV n = runST $ evalVectorMemo (fibm n) n
 
 prop_STVEqv :: MedInt Int -> Bool
 prop_STVEqv (MedInt n) = fibMap n == fibSTV n
 
 fibSTUV :: Int -> Int
-fibSTUV n = evalSTUVectorMemo (fibm n) n
+fibSTUV n = runST $ evalUVectorMemo (fibm n) n
 
 prop_STUVEqv :: MedInt Int -> Bool
 prop_STUVEqv (MedInt n) = fibMap n == fibSTUV n
 
 fibIOV :: Int -> IO Integer
-fibIOV n = evalIOVectorMemoM (fibm n) n
+fibIOV n = evalVectorMemo (fibm n) n
 
 prop_IOVEqv :: MedInt Int -> Property
 prop_IOVEqv (MedInt n) = monadicIO $ do
@@ -341,7 +342,7 @@ prop_IOVEqv (MedInt n) = monadicIO $ do
                            assert $ r == fibMap n
 
 fibIOUV :: Int -> IO Int
-fibIOUV n = evalIOUVectorMemoM (fibm n) n
+fibIOUV n = evalUVectorMemo (fibm n) n
 
 prop_IOUVEqv :: MedInt Int -> Property
 prop_IOUVEqv (MedInt n) = monadicIO $ do

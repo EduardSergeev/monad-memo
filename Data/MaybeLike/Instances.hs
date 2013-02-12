@@ -11,154 +11,166 @@ Defines default instances of `MaybeLike` for most primitive "Unboxed" types
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses,
+  FlexibleContexts, FlexibleInstances #-}
 
 
 module Data.MaybeLike.Instances
 (
 
-  module Data.Nullable,
   module Data.MaybeLike
 
 ) where
 
+import Data.Eq ((==))
+import Prelude (Bounded(minBound), (/), isNaN)
 import Prelude (Float, Double)
 import Data.Bool
 import Data.Char
 import Data.Int
 import Data.Word
+import qualified Data.Maybe as M
 
 import Data.MaybeLike
-import Data.Nullable
 
 
-instance Nullable Char => MaybeLike Char Char where
+instance MaybeLike (M.Maybe a) a where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = M.Nothing
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing = M.isNothing
+    {-# INLINE just #-}
+    just = M.Just
+    {-# INLINE fromJust #-}
+    fromJust = M.fromJust
+
+instance MaybeLike Char Char where
+    {-# INLINE nothing #-}
+    nothing = minBound
+    {-# INLINE isNothing #-}
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Int => MaybeLike Int Int where
+instance MaybeLike Int Int where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Int8 => MaybeLike Int8 Int8 where
+instance MaybeLike Int8 Int8 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Int16 => MaybeLike Int16 Int16 where
+instance MaybeLike Int16 Int16 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Int32 => MaybeLike Int32 Int32 where
+instance MaybeLike Int32 Int32 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Int64 => MaybeLike Int64 Int64 where
+instance MaybeLike Int64 Int64 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
 
-instance Nullable Word => MaybeLike Word Word where
+instance MaybeLike Word Word where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Word8 => MaybeLike Word8 Word8 where
+instance MaybeLike Word8 Word8 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Word16 => MaybeLike Word16 Word16 where
+instance MaybeLike Word16 Word16 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Word32 => MaybeLike Word32 Word32 where
+instance MaybeLike Word32 Word32 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Word64 => MaybeLike Word64 Word64 where
+instance MaybeLike Word64 Word64 where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = minBound
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing v = v == minBound
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v
 
 
-instance Nullable Float => MaybeLike Float Float where
+instance MaybeLike Float Float where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = 0/0
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing = isNaN
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
     fromJust v = v 
 
-instance Nullable Double => MaybeLike Double Double where
+instance MaybeLike Double Double where
     {-# INLINE nothing #-}
-    nothing = null
+    nothing = 0/0
     {-# INLINE isNothing #-}
-    isNothing = isNull
+    isNothing = isNaN
     {-# INLINE just #-}
     just v = v
     {-# INLINE fromJust #-}
