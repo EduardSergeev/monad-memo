@@ -32,21 +32,23 @@ import Data.Tuple
 import Data.Ord
 import Data.Function
 import Control.Applicative
-import Control.Monad.State.Strict
+import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Identity
 
 import qualified Data.MapLike as M
 import Control.Monad.Memo.Class
+import Control.Monad.Trans.Memo.StateCache
 
 
 -- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer
 -- with generic 'Data.MapLike' container for a cache
-newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateT c m a }
+newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateCache c m a }
     deriving (Functor, Applicative, Alternative,
-                     Monad, MonadPlus, MonadFix)
+              Monad, MonadPlus, MonadFix, MonadTrans, MonadIO)
 
 runMemoStateT :: MemoStateT c k v m a -> c -> m (a, c)
-runMemoStateT = runStateT . toStateT
+runMemoStateT = runStateCache . toStateT
 
 evalMemoStateT :: (Monad m) => MemoStateT c k v m a -> c -> m a
 evalMemoStateT m s = runMemoStateT m s >>= return . fst
@@ -62,15 +64,13 @@ evalMemoState m = runIdentity . evalMemoStateT m
 
 
 instance (Monad m, M.MapLike c k v) => MonadCache k v (MemoStateT c k v m) where
-    lookup k = MemoStateT $ get >>= return . M.lookup k
-    add k v  = MemoStateT $ modify $ \m -> M.add k v m
+    {-# INLINE lookup #-}
+    lookup k = MemoStateT $ container >>= return . M.lookup k
+    {-# INLINE add #-}
+    add k v  = MemoStateT $ do
+                 m <- container
+                 setContainer $ M.add k v m
 
 instance (Monad m, M.MapLike c k v) => MonadMemo k v (MemoStateT c k v m) where
+    {-# INLINE memo #-}
     memo = memol0
-
-
-instance (MonadIO m) => MonadIO (MemoStateT l k v m) where
-    liftIO = lift . liftIO
-
-instance MonadTrans (MemoStateT l k v) where
-    lift = MemoStateT . lift

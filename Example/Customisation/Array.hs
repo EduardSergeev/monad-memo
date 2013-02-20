@@ -36,7 +36,7 @@ import Control.Monad.Writer
 
 import Data.MaybeLike
 import Control.Monad.Memo.Class
-import Control.Monad.Memo.Mutable.Array
+import Control.Monad.Memo.Array
 
 
 fibmw 0 = return 0
@@ -65,7 +65,7 @@ instance MaybeLike Int32 Int16Sum where
 
 -- | `UArrayMemo` instance for our tuple
 -- Now we can use `evalUArrayMemo` and `runUArrayMemo` methods
-instance (Monad m, Ix k, MArray (UArray m) Int32 m) => UArrayMemo k Int16Sum Int32 m 
+instance UArrayMemo Int16Sum Int32
 
 
 evalFibSTUA :: Int -> Int16Sum

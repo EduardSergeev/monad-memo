@@ -10,7 +10,7 @@ Portability :  non-portable
 More advanced examples
 -}
 
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, TypeFamilies #-}
 
 module Example.Customisation.Vector
 (
@@ -33,8 +33,8 @@ import qualified Data.Vector.Unboxed.Mutable as UM
 
 import Data.MaybeLike
 import Control.Monad.Memo.Class
-import Control.Monad.Memo.Mutable
-import Control.Monad.Memo.Mutable.Vector
+import Control.Monad.Trans.Memo.ReaderCache
+import Control.Monad.Memo.Vector
 
 
 fibm 0 = return 0
@@ -59,17 +59,12 @@ instance MaybeLike BoolInt Int where
 
 -- | UVectorMemo instance will allow us to use all @eval*@ and @run*@ functions
 -- from unboxed part of "Control.Monad.Trans.Memo.Vector" module 
-instance PrimMonad m => UVectorMemo Int BoolInt m
+instance UVectorMemo Int BoolInt
 
 
--- | This way we can run `VectorCache` without defining instance of `VectorMemo`
--- for our custom array type
+-- | Use standard function once we defined the instance for `VectorMemo`
 evalFibSTUV :: Int -> Int
-evalFibSTUV n = runST $ (UM.replicate n (False,(0::Int))) >>= evalMutableCache (fibm n)
-
--- | Although it is easier to use standard function once we defined the instance for `VectorMemo`
-evalFibSTUV2 :: Int -> Int
-evalFibSTUV2 n = runST $ evalUVectorMemo (fibm n) (n+1)
+evalFibSTUV n = runST $ evalUVectorMemo (fibm n) (n+1)
 
 runFibSTUV :: Int -> (Int, UV.Vector (Bool,Int))
 runFibSTUV n = runST $ do 

@@ -41,26 +41,29 @@ module Control.Monad.Memo (
     startRunMemoT,
     startEvalMemoT,
 
-
-    -- * Generic mutable memo cache
-    Mutable(..),
-    MutableCache(..),
-
     -- * Array-based Memo monad
     -- ** ArrayCache for boxed types
     ArrayCache,
-    ArrayMemo(..),
+    ArrayMemo,
+    evalArrayMemo,
+    runArrayMemo,
     -- ** ArrayCache for unboxed types
     UArrayCache,
-    UArrayMemo(..),
+    UArrayMemo,
+    evalUArrayMemo,
+    runUArrayMemo,
 
     -- * Vector-based Memo monad
     -- ** VectorCache for boxed types
     VectorCache,
-    VectorMemo(..),
+    VectorMemo,
+    evalVectorMemo,
+    runVectorMemo,
     -- ** VectorCache for unboxed types
     UVectorCache,
-    UVectorMemo(..),
+    UVectorMemo,
+    evalUVectorMemo,
+    runUVectorMemo,
 
     -- * Adapter for memoization of multi-argument functions
     for2,
@@ -95,11 +98,10 @@ import Control.Monad.Trans.Memo.State
 
 import Control.Monad.Trans.Memo.Map
 
-import Control.Monad.Memo.Mutable
-import Control.Monad.Memo.Mutable.Array
-import Control.Monad.Memo.Mutable.Array.Instances
-import Control.Monad.Memo.Mutable.Vector
-import Control.Monad.Memo.Mutable.Vector.Instances
+import Control.Monad.Memo.Array
+import Control.Monad.Memo.Array.Instances
+import Control.Monad.Memo.Vector
+import Control.Monad.Memo.Vector.Instances
 
 import Data.MapLike
 import Data.MaybeLike

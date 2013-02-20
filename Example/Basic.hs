@@ -98,8 +98,6 @@ module Example.Basic
 
 ) where
 
-import Control.Monad.Memo
-
 import Control.Monad.Identity
 import Control.Monad.List
 import Control.Monad.Cont
@@ -118,6 +116,10 @@ import Control.Applicative
 import Debug.Trace
 import Data.Array.MArray
 import Data.Array.IO
+
+import Control.Monad.Memo
+import Control.Monad.Memo.Vector.Expandable as EV
+
 
 
 
@@ -265,19 +267,23 @@ evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
 
 
 
--- | Here we use monomorphic type
+-- | Plus MonadWriter
 fibmw 0 = "fib: 0" `trace` tell "0" >> return 0
 fibmw 1 = "fib: 1" `trace` tell "1" >> return 1
 fibmw n = ("fib: " ++ show n) `trace` do
-  f1 <- memo fibmw (n-1)
-  f2 <- memo fibmw (n-2)
+  f1 <-  fibmw (n-1)
+  f2 <-  fibmw (n-2)
   tell $ show n
   return (f1+f2)
+
 
 evalFibmw :: Integer -> (Integer, String)
 evalFibmw = startEvalMemo . runWriterT . fibmw
 
-runFibmw = startRunMemo . runWriterT . fibmw
+t1 n = startEvalMemo . runWriterT $ (fibmw n >> fibmw 1) 
+t2 n = runWriter $ (fibmw n >> fibmw 1) 
+
+runFibmw n = startRunMemo . runWriterT $ (fibmw n >> fibmw 1)
 
 evalFibmwSTA n = runST $ evalArrayMemo (runWriterT (fibmw n)) (0,n)
 
@@ -294,6 +300,7 @@ evalFibmwIO n = evalArrayMemo (runWriterT (fibmw n)) (0,n)
 
 
 -- | Can also be defined with polymorphic monad classes
+-- MonadCont here
 fibmc :: (Eq k, Num k, Show k, Num n, MonadCont m, MonadMemo k n m) => k -> m n
 fibmc 0 = "fib: 0" `trace` return 0
 fibmc 1 = "fib: 1" `trace` return 1
@@ -519,5 +526,30 @@ evalFibmIOUV n = evalUVectorMemo (fibm n) (n+1)
 runFibmIOUV :: Int -> IO (Int, UV.Vector Int)
 runFibmIOUV n = do
   (a, vec) <- runUVectorMemo (fibm n) (n+1)
+  ivec <- UV.freeze vec
+  return (a, ivec)
+
+
+evalFibmSTEV :: Int -> Integer
+evalFibmSTEV n = runST $ EV.startEvalVectorMemo (fibm n)
+
+evalFibmIOEV :: Int -> IO Integer
+evalFibmIOEV n = EV.startEvalVectorMemo (fibm n)
+
+evalFibmSTEUV :: Int -> Int
+evalFibmSTEUV n = runST $ EV.startEvalUVectorMemo (fibm n)
+
+runFibmSTEUV :: Int -> (Int, UV.Vector Int)
+runFibmSTEUV n = runST $ do
+    (a,vec) <- EV.startRunUVectorMemo (fibm n)
+    ivec <- UV.freeze vec
+    return (a,ivec)
+
+evalFibmIOEUV :: Int -> IO Int
+evalFibmIOEUV n = EV.startEvalUVectorMemo (fibm n)
+
+runFibmIOEUV :: Int -> IO (Int, UV.Vector Int)
+runFibmIOEUV n = do
+  (a, vec) <- EV.startRunUVectorMemo (fibm n)
   ivec <- UV.freeze vec
   return (a, ivec)

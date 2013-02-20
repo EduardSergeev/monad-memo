@@ -5,11 +5,7 @@ module Control.Monad.Memo.Test
        tests
 ) where
 
-import Test.QuickCheck
-import Test.QuickCheck.Monadic
-import System.Random
-
-import Control.Monad.Memo
+import qualified Data.IntMap as IM
 import Control.Monad.Reader
 import Control.Monad.Writer
 import Control.Monad.State
@@ -17,10 +13,15 @@ import Control.Monad.Cont
 import Control.Monad.List
 import Control.Monad.ST
 
-import qualified Data.IntMap as IM
-
+import Test.QuickCheck
+import Test.QuickCheck.Monadic
+import System.Random
 import Test.Framework (defaultMain, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+
+import Control.Monad.Memo
+import qualified Control.Monad.Memo.Vector.Expandable as EV
+import qualified Control.Monad.Memo.Vector.Unsafe as UV
 
 
 smallUpperBound :: Num n => n
@@ -271,9 +272,8 @@ prop_Mutual2GEqv sx sy = g (x,y) == evalGm2 x y
         x = toInt sx
         y = toInt sy
 
-
-
--- | Different memo caches tests
+-- | Array tests
+----------------
 
 fibMap :: (Ord n, Num n, Num v) => n -> v
 fibMap = startEvalMemo . fibm 
@@ -320,6 +320,8 @@ prop_IOUAEqv (MedInt n) = monadicIO $ do
                            r <- run $ fibIOUA n
                            assert $ r == fibMap n
 
+-- | Vector tests
+-----------------
 
 fibSTV :: Int -> Integer
 fibSTV n = runST $ evalVectorMemo (fibm n) n
@@ -347,6 +349,69 @@ fibIOUV n = evalUVectorMemo (fibm n) n
 prop_IOUVEqv :: MedInt Int -> Property
 prop_IOUVEqv (MedInt n) = monadicIO $ do
                            r <- run $ fibIOUV n
+                           assert $ r == fibMap n
+
+
+-- | Expandable vector tests
+----------------------------
+
+fibSTEV :: Int -> Integer
+fibSTEV n = runST $ EV.startEvalVectorMemo (fibm n)
+
+prop_STEVEqv :: MedInt Int -> Bool
+prop_STEVEqv (MedInt n) = fibMap n == fibSTEV n
+
+fibSTEUV :: Int -> Int
+fibSTEUV n = runST $ EV.startEvalUVectorMemo (fibm n)
+
+prop_STEUVEqv :: MedInt Int -> Bool
+prop_STEUVEqv (MedInt n) = fibMap n == fibSTEUV n
+
+fibIOEV :: Int -> IO Integer
+fibIOEV n = EV.startEvalVectorMemo (fibm n)
+
+prop_IOEVEqv :: MedInt Int -> Property
+prop_IOEVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOEV n
+                           assert $ r == fibMap n
+
+fibIOEUV :: Int -> IO Int
+fibIOEUV n = EV.startEvalUVectorMemo (fibm n)
+
+prop_IOEUVEqv :: MedInt Int -> Property
+prop_IOEUVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOEUV n
+                           assert $ r == fibMap n
+
+-- | Unsafe vector tests
+------------------------
+
+fibSTUSV :: Int -> Integer
+fibSTUSV n = runST $ UV.unsafeEvalVectorMemo (fibm n) n
+
+prop_STUSVEqv :: MedInt Int -> Bool
+prop_STUSVEqv (MedInt n) = fibMap n == fibSTUSV n
+
+fibSTUSUV :: Int -> Int
+fibSTUSUV n = runST $ UV.unsafeEvalUVectorMemo (fibm n) n
+
+prop_STUSUVEqv :: MedInt Int -> Bool
+prop_STUSUVEqv (MedInt n) = fibMap n == fibSTUSUV n
+
+fibIOUSV :: Int -> IO Integer
+fibIOUSV n = UV.unsafeEvalVectorMemo (fibm n) n
+
+prop_IOUSVEqv :: MedInt Int -> Property
+prop_IOUSVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOUSV n
+                           assert $ r == fibMap n
+
+fibIOUSUV :: Int -> IO Int
+fibIOUSUV n = UV.unsafeEvalUVectorMemo (fibm n) n
+
+prop_IOUSUVEqv :: MedInt Int -> Property
+prop_IOUSUVEqv (MedInt n) = monadicIO $ do
+                           r <- run $ fibIOUSUV n
                            assert $ r == fibMap n
 
 
@@ -378,6 +443,12 @@ tests = [
                                       testProperty "STUVector cache"   prop_STUVEqv,
                                       testProperty "IOVector cache"    prop_IOVEqv,
                                       testProperty "IOUVector cache"   prop_IOUVEqv
+                                     ],
+                       testGroup "Expandable VectorCache" [
+                                      testProperty "Exp STVector cache"    prop_STEVEqv,
+                                      testProperty "Exp STUVector cache"   prop_STEUVEqv,
+                                      testProperty "Exp IOVector cache"    prop_IOEVEqv,
+                                      testProperty "Exp IOUVector cache"   prop_IOEUVEqv
                                      ]
                       ]
     ]

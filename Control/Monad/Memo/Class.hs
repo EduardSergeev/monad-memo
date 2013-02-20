@@ -168,9 +168,7 @@ instance (Error e, MonadCache k  (Either e v) m) => MonadMemo k v (ErrorT e m) w
     memo f = ErrorT . memol0 (runErrorT . f)
 
 instance (MonadCache (r,k) v m) => MonadMemo k v (ReaderT r m) where
-    memo f k = do
-      r <- ask
-      memoln lift (r,) f k
+    memo f k = ReaderT $ \r -> memol0 (\(r, k) -> runReaderT (f k) r) (r, k)
 
 instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (WL.WriterT w m) where
     memo f = WL.WriterT . memol0 (WL.runWriterT . f)
@@ -178,21 +176,14 @@ instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (WL.WriterT w m) wher
 instance (Monoid w, MonadCache k (v,w) m) => MonadMemo k v (WS.WriterT w m) where
     memo f = WS.WriterT . memol0 (WS.runWriterT . f)
 
+instance (MonadCache (s,k) (v,s) m) => MonadMemo k v (SS.StateT s m) where
+    memo f k = SS.StateT $ \s -> memol0 (\(s, k) -> SS.runStateT (f k) s) (s, k)        
 
-instance (MonadCache (s,k) v m) => MonadMemo k v (SL.StateT s m) where
-    memo f k = do
-      s <- SL.get
-      memoln lift (s,) f k
+instance (MonadCache (s,k) (v,s) m) => MonadMemo k v (SL.StateT s m) where
+    memo f k = SL.StateT $ \s -> memol0 (\(s, k) -> SL.runStateT (f k) s) (s, k)        
 
-instance (MonadCache (s,k) v m) => MonadMemo k v (SS.StateT s m) where
-    memo f k = do
-      s <- SS.get
-      memoln lift (s,) f k
+instance (Monoid w, MonadCache (r,s,k) (v,s,w) m) => MonadMemo k v (RWSL.RWST r w s m) where
+    memo f k = RWSL.RWST $ \r s -> memol0 (\(r, s, k) -> RWSL.runRWST (f k) r s) (r, s, k)   
 
-
---instance (Monoid w, MonadCache (r,w,s,k) v m) => MonadMemo k v (RWSL.RWST r w s m) where
---    memo f k = do
---      r <- RWSL.ask
---      s <- RWSL.get
---      (_,w) <- RWSL.listen
---      memoln lift (r,s,w,) f k
+instance (Monoid w, MonadCache (r,s,k) (v,s,w) m) => MonadMemo k v (RWSS.RWST r w s m) where
+    memo f k = RWSS.RWST $ \r s -> memol0 (\(r, s, k) -> RWSS.runRWST (f k) r s) (r, s, k)   

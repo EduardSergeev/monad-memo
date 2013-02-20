@@ -30,7 +30,7 @@ import Control.Monad.ST
 
 import Data.MaybeLike
 import Control.Monad.Memo.Class
-import Control.Monad.Memo.Mutable.Array.Instances
+import Control.Monad.Memo.Array.Instances
 
 
 fibm 0 = return 0
