@@ -11,25 +11,26 @@ Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization m
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances,
-  GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances #-}
 
 module Control.Monad.Trans.Memo.State
 (
  
+    -- * MemoStateT monad transformer
     MemoStateT(..),
     runMemoStateT,
     evalMemoStateT,
-
+    -- * MemoState monad
     MemoState,
     runMemoState,
     evalMemoState,
+    -- * Internal
+    Container(..)
 
 ) where
 
 
 import Data.Tuple
-import Data.Ord
 import Data.Function
 import Control.Applicative
 import Control.Monad
@@ -41,35 +42,45 @@ import Control.Monad.Memo.Class
 import Control.Monad.Trans.Memo.StateCache
 
 
--- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer
--- with generic 'Data.MapLike' container for a cache
-newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateCache c m a }
-    deriving (Functor, Applicative, Alternative,
-              Monad, MonadPlus, MonadFix, MonadTrans, MonadIO)
+newtype Container s = Container { toState :: s }
 
-runMemoStateT :: MemoStateT c k v m a -> c -> m (a, c)
-runMemoStateT = runStateCache . toStateT
+-- | Memoization monad transformer based on `StateCache`
+-- to be used with pure cache containers which support `M.MapLike` interface
+type MemoStateT s k v = StateCache (Container s)
 
-evalMemoStateT :: (Monad m) => MemoStateT c k v m a -> c -> m a
+
+-- | Returns the pair of the result of `MonadMemo` computation
+-- along with the final state of the internal pure container wrapped in monad
+runMemoStateT :: Monad m => MemoStateT s k v m a -> s -> m (a, s)
+runMemoStateT m s = do
+  (a, c) <- runStateCache m (Container s)
+  return (a, toState c)
+
+-- | Returns the result of `MonadMemo` computation wrapped in monad.
+-- This function discards the cache
+evalMemoStateT :: Monad m => MemoStateT c k v m a -> c -> m a
 evalMemoStateT m s = runMemoStateT m s >>= return . fst
 
 
+-- | Memoization monad based on `StateCache`
+-- to be used with pure cache containers which support `M.MapLike` interface
 type MemoState c k v = MemoStateT c k v Identity
 
+-- | Returns the pair of the result of `MonadMemo` computation
+-- along with the final state of the internal pure container
 runMemoState :: MemoState c k v a -> c -> (a, c)
 runMemoState m = runIdentity . runMemoStateT m
 
+-- | Returns the result of `MonadMemo` computation discarding the cache
 evalMemoState :: MemoState c k v a -> c -> a
 evalMemoState m = runIdentity . evalMemoStateT m
 
 
 instance (Monad m, M.MapLike c k v) => MonadCache k v (MemoStateT c k v m) where
     {-# INLINE lookup #-}
-    lookup k = MemoStateT $ container >>= return . M.lookup k
+    lookup k = container >>= return . M.lookup k . toState
     {-# INLINE add #-}
-    add k v  = MemoStateT $ do
-                 m <- container
-                 setContainer $ M.add k v m
+    add k v  = container >>= setContainer . Container . M.add k v . toState
 
 instance (Monad m, M.MapLike c k v) => MonadMemo k v (MemoStateT c k v m) where
     {-# INLINE memo #-}

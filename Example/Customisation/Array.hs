@@ -11,7 +11,7 @@ More advanced examples
 -}
 
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances #-}
+  FlexibleContexts, UndecidableInstances, TypeSynonymInstances #-}
 
 module Example.Customisation.Array
 (
@@ -28,8 +28,7 @@ module Example.Customisation.Array
 
 import Data.Ix
 import Data.Int
-import Data.Array.MArray (MArray)
-import Data.Array.Unsafe (unsafeFreeze)
+import Data.Array.MArray (MArray, freeze)
 import qualified Data.Array.Unboxed as UA
 import Control.Monad.ST
 import Control.Monad.Writer
@@ -58,7 +57,7 @@ type Int16Sum = (Int16,Sum Int16)
 instance MaybeLike Int32 Int16Sum where
     nothing = minBound
     isNothing v = v == minBound
-    just (a,Sum b) = (fromIntegral a)*2^16 + (fromIntegral b)
+    just (a,Sum b) = fromIntegral a * 2^16 + fromIntegral b
     fromJust v =
         let (a,b) = v `divMod` (2^16)
         in (fromIntegral a, Sum (fromIntegral b))
@@ -74,7 +73,7 @@ evalFibSTUA n = runST $ evalUArrayMemo (runWriterT (fibmw n)) (0,n)
 runFibSTUA :: Int -> (Int16Sum, UA.UArray Int Int32)
 runFibSTUA n = runST $ do 
    (a,arr) <- runUArrayMemo (runWriterT (fibmw n)) (0,n)
-   iarr <- unsafeFreeze arr
+   iarr <- freeze arr
    return (a, iarr)
 
 
@@ -84,6 +83,6 @@ evalFibIOUA n = (`evalUArrayMemo`(0,n)) . runWriterT . fibmw $ n
 runFibIOUA :: Int -> IO (Int16Sum, UA.UArray Int Int32)
 runFibIOUA n = do
    (a,arr) <- runUArrayMemo (runWriterT (fibmw n)) (0,n)
-   iarr <- unsafeFreeze arr
+   iarr <- freeze arr
    return (a, iarr)
 

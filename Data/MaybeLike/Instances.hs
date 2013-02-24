@@ -25,7 +25,6 @@ module Data.MaybeLike.Instances
 import Data.Eq ((==))
 import Prelude (Bounded(minBound), (/), isNaN)
 import Prelude (Float, Double)
-import Data.Bool
 import Data.Char
 import Data.Int
 import Data.Word

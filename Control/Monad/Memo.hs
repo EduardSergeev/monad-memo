@@ -21,7 +21,7 @@ module Control.Monad.Memo (
     -- * MonadMemo class
     MonadMemo(..),
     -- * Generalized Memo monad
-    MemoState(..),
+    MemoState,
     runMemoState,
     evalMemoState,
     -- * Generalized MemoStateT monad transformer
@@ -35,7 +35,7 @@ module Control.Monad.Memo (
     startRunMemo,
     startEvalMemo,
     -- * Map-based MemoT monad transformer
-    MemoT(..),
+    MemoT,
     runMemoT,
     evalMemoT,
     startRunMemoT,
@@ -99,13 +99,13 @@ import Control.Monad.Trans.Memo.State
 import Control.Monad.Trans.Memo.Map
 
 import Control.Monad.Memo.Array
-import Control.Monad.Memo.Array.Instances
+import Control.Monad.Memo.Array.Instances()
 import Control.Monad.Memo.Vector
-import Control.Monad.Memo.Vector.Instances
+import Control.Monad.Memo.Vector.Instances()
 
 import Data.MapLike
 import Data.MaybeLike
-import Data.MaybeLike.Instances
+import Data.MaybeLike.Instances()
 
 import Control.Monad
 import Control.Monad.Trans

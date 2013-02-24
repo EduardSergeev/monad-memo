@@ -280,10 +280,10 @@ fibmw n = ("fib: " ++ show n) `trace` do
 evalFibmw :: Integer -> (Integer, String)
 evalFibmw = startEvalMemo . runWriterT . fibmw
 
-t1 n = startEvalMemo . runWriterT $ (fibmw n >> fibmw 1) 
-t2 n = runWriter $ (fibmw n >> fibmw 1) 
+t1 n = startEvalMemo . runWriterT $ fibmw n >> fibmw 1 
+t2 n = runWriter $ fibmw n >> fibmw 1 
 
-runFibmw n = startRunMemo . runWriterT $ (fibmw n >> fibmw 1)
+runFibmw n = startRunMemo . runWriterT $ fibmw n >> fibmw 1
 
 evalFibmwSTA n = runST $ evalArrayMemo (runWriterT (fibmw n)) (0,n)
 

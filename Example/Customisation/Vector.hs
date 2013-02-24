@@ -10,7 +10,8 @@ Portability :  non-portable
 More advanced examples
 -}
 
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances,
+  TypeFamilies, TypeSynonymInstances #-}
 
 module Example.Customisation.Vector
 (

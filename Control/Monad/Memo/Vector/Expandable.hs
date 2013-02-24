@@ -18,17 +18,20 @@ module Control.Monad.Memo.Vector.Expandable
  (
 
    -- * VectorCache for boxed types
-   Vector,
    VectorCache,
    VectorMemo,
    startEvalVectorMemo,
    startRunVectorMemo,
    -- * UVectorCache for unboxed types
-   UVector,
    UVectorCache,
    UVectorMemo,
    startEvalUVectorMemo,
-   startRunUVectorMemo
+   startRunUVectorMemo,
+   -- * Generic functions for VectorCache
+   Container(..),
+   Cache,
+   genericStartEvalVectorMemo,
+   genericStartRunVectorMemo
 
 ) where 
 
@@ -38,7 +41,6 @@ import Data.Ord
 import Data.Function
 import Prelude (Num(..))
 import Data.Maybe (Maybe(..))
-import Data.Vector.Unboxed (Unbox)
 import Data.Vector.Generic.Mutable
 import qualified Data.Vector.Mutable as M
 import qualified Data.Vector.Unboxed.Mutable as UM
@@ -53,124 +55,119 @@ import Control.Monad.Memo.Class
 import Control.Monad.Trans.Memo.StateCache
 
 
-newtype Cache c s e m a = Cache { toStateCache :: StateCache (c s e) m a }
+newtype Container c s e = Container { toVector :: c s e }
 
-instance Functor m => Functor (Cache c s e m) where
-    {-# INLINE fmap #-}
-    fmap f m = Cache $ fmap f (toStateCache m)
-
-instance (Functor m, Monad m) => Applicative (Cache c s e m) where
-    {-# INLINE pure #-}
-    pure = Cache . pure
-    {-# INLINE (<*>) #-}
-    a <*> b = Cache (toStateCache a <*> toStateCache b)
-
-instance Monad m => Monad (Cache c s e m) where
-    {-# INLINE return #-}
-    return = Cache . return
-    {-# INLINE (>>=) #-}
-    m >>= f = Cache ((toStateCache m) >>= toStateCache . f)
-
-instance MonadTrans (Cache c s e) where
-    {-# INLINE lift #-}
-    lift = Cache . lift
-
-instance MonadFix m => MonadFix (Cache c s e m) where
-    {-# INLINE mfix #-}
-    mfix f = Cache $ mfix $ \a -> toStateCache (f a)
-
+type Cache c s e = StateCache (Container c s e)
 
 instance (PrimMonad m, PrimState m ~ s, MaybeLike e v, MVector c e) =>
     MonadCache Int v (Cache c s e m) where
         {-# INLINE lookup #-}
         lookup k = do
-          c <- Cache container
-          e <- lift $ cacheRead c k
+          c <- container
+          e <- lift $ cacheRead (toVector c) k
           return (if isNothing e then Nothing else Just (fromJust e))
         {-# INLINE add #-}
         add k v = do 
-          c <- Cache container
-          c' <- lift $ cacheWrite c k (just v)
-          Cache $ setContainer c'
+          c <- container
+          v' <- lift $ cacheWrite (toVector c) k (just v)
+          setContainer (Container v')
 
 instance (PrimMonad m, PrimState m ~ s, MaybeLike e v, MVector c e) =>
     MonadMemo Int v (Cache c s e m) where
         {-# INLINE memo #-}
         memo f k = do
-          c <- Cache container
-          let l = length c
+          Container vec <- container
+          let l = length vec
               d = k + 1 - l
           if d > 0
             then do
-              c' <- lift $ expand c l d
-              Cache $ setContainer c'
+              vec' <- lift $ expand vec l d
+              setContainer (Container vec')
               v <- f k
-              c'' <- Cache container
-              lift $ unsafeWrite c'' k (just v)
+              Container vec'' <- container
+              lift $ unsafeWrite vec'' k (just v)
               return v
             else do
-              e <- lift $ cacheRead c k
+              e <- lift $ cacheRead vec k
               if isNothing e
                  then do
                    v <- f k
-                   c' <- Cache container
-                   lift $ unsafeWrite c' k (just v)
+                   Container vec' <- container
+                   lift $ unsafeWrite vec' k (just v)
                    return v
                  else return (fromJust e)
 
 
 -- VectorCache for boxed types
 -- --------------------------
+
+-- | Boxed vector
 type Vector = M.MVector
 
-type VectorCache = Cache Vector
+-- | `MonadCache` based on boxed vector
+type VectorCache s e = Cache Vector s e
 
+-- | This is just to be able to infer the type of the `VectorCache` element.
 class MaybeLike e v => VectorMemo v e | v -> e
 
+-- | Evaluates `MonadMemo` computation using boxed vector which dynamically grows
+-- to accomodate all keys
 startEvalVectorMemo :: (PrimMonad m, VectorMemo v e) =>
                        VectorCache (PrimState m) e m a -> m a
 {-# INLINE startEvalVectorMemo #-}
 startEvalVectorMemo = genericStartEvalVectorMemo
 
+-- | Evaluates `MonadMemo` computation using boxed vector which dynamically grows
+-- to accomodate all keys.
+-- This function also returns the final content of the vector cache
 startRunVectorMemo :: (PrimMonad m, VectorMemo v e) =>
                       VectorCache (PrimState m) e m a -> m (a, Vector (PrimState m) e)
 {-# INLINE startRunVectorMemo #-}
-startRunVectorMemo = genericStartRunUVectorMemo
+startRunVectorMemo = genericStartRunVectorMemo
 
 
 -- VectorCache for unboxed types
 -- ----------------------------
+
+-- | Unboxed vector
 type UVector = UM.MVector
 
-type UVectorCache = Cache UVector
+-- | `MonadCache` based on unboxed vector
+type UVectorCache s e = Cache UVector s e
 
+-- | This is just to be able to infer the type of the `UVectorCache` element.
 class MaybeLike e v => UVectorMemo v e | v -> e
 
+-- | Evaluates `MonadMemo` computation using unboxed vector which dynamically grows
+-- to accomodate all keys
 startEvalUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
                         UVectorCache (PrimState m) e m a -> m a
 {-# INLINE startEvalUVectorMemo #-}
 startEvalUVectorMemo = genericStartEvalVectorMemo
 
+-- | Evaluates `MonadMemo` computation using unboxed vector which dynamically grows
+-- to accomodate all keys.
+-- This function also returns the final content of the vector cache
 startRunUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
                        UVectorCache (PrimState m) e m a -> m (a, UVector (PrimState m) e)
 {-# INLINE startRunUVectorMemo #-}
-startRunUVectorMemo = genericStartRunUVectorMemo
+startRunUVectorMemo = genericStartRunVectorMemo
 
 
-genericStartEvalVectorMemo :: (MaybeLike e v, PrimMonad m, MVector c e) =>
-                              Cache c (PrimState m) e m a -> m a
+genericStartEvalVectorMemo :: (MaybeLike e v, PrimMonad m, MVector vec e) =>
+                              Cache vec (PrimState m) e m a -> m a
 {-# INLINE genericStartEvalVectorMemo #-}
 genericStartEvalVectorMemo m = do
-  (a,_) <- genericStartRunUVectorMemo m
+  (a,_) <- genericStartRunVectorMemo m
   return a
 
-genericStartRunUVectorMemo :: (MaybeLike e v, PrimMonad m, MVector c e) =>
-                              Cache c (PrimState m) e m a -> m (a, c (PrimState m) e)
-{-# INLINE genericStartRunUVectorMemo #-}
-genericStartRunUVectorMemo m = do
-  c <- replicate 0 nothing
-  runStateCache (toStateCache m) c
-
+genericStartRunVectorMemo :: (MaybeLike e v, PrimMonad m, MVector vec e) =>
+                             Cache vec (PrimState m) e m a -> m (a, vec (PrimState m) e)
+{-# INLINE genericStartRunVectorMemo #-}
+genericStartRunVectorMemo m = do
+  vec <- replicate 0 nothing
+  (a, c) <- runStateCache m (Container vec)
+  return (a, toVector c)
 
 {-# INLINE cacheRead #-}
 cacheRead c k =

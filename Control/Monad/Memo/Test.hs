@@ -84,12 +84,10 @@ fibmr n = do
 
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
 
-runFibmrST r n = runST $ evalArrayMemo (runReaderT (fibmr n) r) ((0,0),(r+n,n))
 
 prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Bool
-prop_ReaderEqv r n =
-    ((`runReader`(toInt r)) . fibr  $ (toInt n)) ==
-    (startEvalMemo . (`runReaderT`(toInt r)) . fibmr $ (toInt n))
+prop_ReaderEqv (SmallInt r) (SmallInt n) =
+    ((`runReader` r) . fibr  $ n) == (startEvalMemo . (`runReaderT` r) . fibmr $ n)
 
 prop_ReaderSTEqv :: SmallInt Integer -> SmallInt Integer -> Bool
 prop_ReaderSTEqv (SmallInt r) (SmallInt n) =
@@ -125,7 +123,7 @@ fibc 1 = return 1
 fibc n = do
   f1 <- fibc (n-1)
   f2 <- callCC $ \ break -> do
-          if n == 4 then break 42 else fibc (n-2)
+           if n == 4 then break 42 else fibc (n-2)
   return (f1+f2)
 
 fibmc 0 = return 0
@@ -168,11 +166,8 @@ fibms n = do
   return (f1+f2+s)
 
 prop_StateEqv :: SmallInt Int -> SmallInt Int -> Bool
-prop_StateEqv s n =
-    ((`runState`(toInt s)) . fibs . toInt $ n) ==
-    (startEvalMemo . (`runStateT`(toInt s)) . fibms . toInt $ n)
-
-
+prop_StateEqv (SmallInt s) (SmallInt n) =
+    ((`runState`s) . fibs $ n) == (startEvalMemo . (`runStateT`s) . fibms $ n)
 
 
 -- | With ListT
@@ -196,15 +191,14 @@ unfringem as = do
   return (Fork t u)
 
 prop_ListEqv :: SmallList Char -> Bool
-prop_ListEqv ls =
-    unfringe (toList ls) ==
-    (startEvalMemo . runListT . unfringem $ (toList ls))
+prop_ListEqv (SmallList ls) =
+    unfringe ls == (startEvalMemo . runListT . unfringem $ ls)
 
 
 -- | Mutual recursion
 f :: Int -> (Int,String)
 f 0 = (1,"+")
-f n = (g((n-1),fst(f (n-1))),"-" ++ snd(f (n-1)))
+f n = (g(n-1, fst (f (n-1))),"-" ++ snd(f (n-1)))
 g :: (Int, Int) -> Int
 g (0, m)  = m + 1
 g (n,m) = fst(f (n-1))-g((n-1),m)

@@ -1,101 +1,108 @@
-Name:                monad-memo
+Name:               monad-memo
 
-Version:             0.4.0
+Version:            0.4.0
 
 -- A short (one-line) description of the package.
-Synopsis:            Memoization monad transformer
+Synopsis:           Memoization monad transformer
 
 -- A longer description of the package.
 Description:        Memoization monad transformer supporting most of the standard monad transformers and a range of memoization cache types: from default pure maps to extremely fast mutable vectors 
 
 -- URL for the project homepage or repository.
-Homepage:         https://github.com/EduardSergeev/monad-memo
+Homepage:           https://github.com/EduardSergeev/monad-memo
 
 -- The license under which the package is released.
-License:             BSD3
+License:            BSD3
 
 -- The file containing the license text.
-License-file:        LICENSE
+License-file:       LICENSE
 
 -- The package author(s).
-Author:              Eduard Sergeev
+Author:             Eduard Sergeev
 
 -- An email address to which users can send suggestions, bug reports,
 -- and patches.
-Maintainer:          Eduard.Sergeev@gmail.com
+Maintainer:         eduard.sergeev@gmail.com
 
-Category:            Control, Monad
+Category:           Control, Monad
 
-Build-type:          Simple
+Build-type:         Simple
 
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.10
+Cabal-version:      >=1.10
+
+Tested-with:        GHC==7.0.4, GHC==7.4.2, GHC==7.6.2
 
 Extra-source-files:
-	Tests.hs,
-	Control/Monad/Memo/Test.hs,
-	CHANGES
+          Tests.hs,
+	  Control/Monad/Memo/Test.hs,
+	  CHANGES
 
 source-repository head
-  type:                git
-  location:	  https://github.com/EduardSergeev/monad-memo.git
+  type:             git
+  location:	    https://github.com/EduardSergeev/monad-memo.git
+
+source-repository this
+  type:             git
+  location:         https://github.com/EduardSergeev/monad-memo.git
+  tag:              0.4.0
 
 Flag examples
-  description: Builds examples
-  default:     False
+  description:      Builds examples
+  default:          False
 
 
 Library
-  default-language:	Haskell2010
+  default-language: Haskell2010
   build-depends:
-     base >= 3.0,
-     mtl >= 2.0,
-     transformers >= 0.2,
-     containers >= 0.3,
-     array >= 0.4,
-     vector >= 0.7,
-     primitive >= 0.3
-
+          base >= 3.0 && <= 5.0,
+          mtl >= 2.0,
+          transformers >= 0.2,
+          containers >= 0.3,
+          array >= 0.3,
+          vector >= 0.7,
+          primitive >= 0.3
+  
   exposed-modules:
-     Control.Monad.Memo,
-     Control.Monad.Memo.Class,
-     Control.Monad.Trans.Memo.ReaderCache,
-     Control.Monad.Trans.Memo.StateCache,
-     Control.Monad.Trans.Memo.State,
-     Control.Monad.Trans.Memo.Map,
-     Control.Monad.Memo.Array,
-     Control.Monad.Memo.Array.Instances,
-     Control.Monad.Memo.Vector,
-     Control.Monad.Memo.Vector.Expandable,
-     Control.Monad.Memo.Vector.Unsafe,
-     Control.Monad.Memo.Vector.Instances,
-     Data.MapLike,
-     Data.MapLike.Instances,
-     Data.MaybeLike,
-     Data.MaybeLike.Instances
+          Control.Monad.Memo,
+          Control.Monad.Memo.Class,
+          Control.Monad.Trans.Memo.ReaderCache,
+          Control.Monad.Trans.Memo.StateCache,
+          Control.Monad.Trans.Memo.State,
+          Control.Monad.Trans.Memo.Map,
+          Control.Monad.Memo.Array,
+          Control.Monad.Memo.Array.Instances,
+          Control.Monad.Memo.Vector,
+          Control.Monad.Memo.Vector.Expandable,
+          Control.Monad.Memo.Vector.Unsafe,
+          Control.Monad.Memo.Vector.Instances,
+          Data.MapLike,
+          Data.MapLike.Instances,
+          Data.MaybeLike,
+          Data.MaybeLike.Instances
 
   if flag(examples)
      exposed-modules:
-       Example.Basic,
-       Example.Customisation.MaybeLike,
-       Example.Customisation.Array,
-       Example.Customisation.Vector
+          Example.Basic,
+          Example.Customisation.MaybeLike,
+          Example.Customisation.Array,
+          Example.Customisation.Vector
 
 Test-Suite tests
-  default-language:	Haskell2010
-  type:		exitcode-stdio-1.0
-  main-is:		Tests.hs
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          Tests.hs
   build-depends: 
-     base >= 3.0,
-     mtl >= 2.0,
-     transformers >= 0.2,
-     containers >= 0.3,
-     array >= 0.4,
-     vector >= 0.7,
-     primitive >= 0.3,
-     random >= 1.0,
-     QuickCheck >= 2.0,
-     test-framework-quickcheck2 >= 0.2.9,
-     test-framework >= 0.3.3
-  other-modules:	Control.Monad.Memo.Test
+          base >= 3.0 && <= 5.0,
+          mtl >= 2.0,
+          transformers >= 0.2,
+          containers >= 0.3,
+          array >= 0.3,
+          vector >= 0.7,
+          primitive >= 0.3,
+          random >= 1.0,
+          QuickCheck >= 2.0,
+          test-framework-quickcheck2 >= 0.2.9,
+          test-framework >= 0.3.3
+  other-modules:    Control.Monad.Memo.Test

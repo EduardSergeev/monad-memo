@@ -11,8 +11,7 @@ Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization m
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances,
-  UndecidableInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Control.Monad.Trans.Memo.StateCache
 (
@@ -20,38 +19,37 @@ module Control.Monad.Trans.Memo.StateCache
     StateCache(..),
     container,
     setContainer,
-    update,
     evalStateCache
 
 ) where
 
-
 import Data.Function
-import Data.Tuple
 import Control.Applicative
+import Control.Monad
+import Control.Monad.Fix
 import Control.Monad.Trans
-import Control.Monad.Identity
 
-
+-- | Generic memoization cache which uses provided container which can also be updated by the computation.
+-- This is pretty much identical to `Control.Monad.Trans.State.Strict.StateT`,
+-- but is tuned to speed up implementations which use unboxed mutable containers
 newtype StateCache c m a = StateCache { runStateCache :: c -> m (a, c) }
 
+-- | Evaluates computation discarding the resulting container 
 evalStateCache :: Monad m => StateCache c m a -> c -> m a
 {-# INLINE evalStateCache #-}
 evalStateCache m c = do
     (a, _) <- runStateCache m c
     return a
 
+-- | Returns internal container
 container :: Monad m => StateCache c m c
 {-# INLINE container #-}
 container = StateCache $ \c -> return (c, c)
 
+-- | Assigns new value to internal container
 setContainer :: Monad m => c -> StateCache c m ()
 {-# INLINE setContainer #-}
 setContainer c = StateCache $ \_ -> return ((), c)
-
-update :: Monad m => (c -> m (a, c)) -> StateCache c m a
-{-# INLINE update #-}
-update f = StateCache $ f
 
 
 instance (Functor m) => Functor (StateCache c m) where
@@ -68,7 +66,6 @@ instance (Functor m, Monad m) => Applicative (StateCache c m) where
         (a, c'') <- runStateCache aa c'
         return (f a, c'')
        
-
 instance (Functor m, MonadPlus m) => Alternative (StateCache c m) where
     {-# INLINE empty #-}
     empty = mzero
@@ -90,7 +87,7 @@ instance (Monad m) => Monad (StateCache c m) where
 
 instance (MonadPlus m) => MonadPlus (StateCache c m) where
     {-# INLINE mzero #-}
-    mzero       = StateCache $ \_ -> mzero
+    mzero       = StateCache $ const mzero
     {-# INLINE mplus #-}
     m `mplus` n = StateCache $ \c -> runStateCache m c `mplus` runStateCache n c
 
