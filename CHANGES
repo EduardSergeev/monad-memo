@@ -9,3 +9,6 @@
 
 0.4.0
 - ArrayCache: mutable array-based MonadCache for top performance
+- VectorCache (and flavours) vector-based MonadCache for even better performance
+- Bug fixes in transformer implementations (Reader, State, RWS)
+- Simple benchmark included

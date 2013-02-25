@@ -7,6 +7,9 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, flexible instances)
 
+Vector-based `MonadCache` implementation which dynamically expands the vector during the computation to accomodate all requested keys.
+This implementation does not require to specify the length of the vector up front, but may be slower than "Control.Monad.Memo.Vector".
+
 -}
 
 {-# LANGUAGE NoImplicitPrelude,
@@ -55,9 +58,10 @@ import Control.Monad.Memo.Class
 import Control.Monad.Trans.Memo.StateCache
 
 
-newtype Container c s e = Container { toVector :: c s e }
+newtype Container vec = Container { toVector :: vec }
 
-type Cache c s e = StateCache (Container c s e)
+-- | Generic Vector-based memo cache
+type Cache vec k e = StateCache (Container (vec k e))
 
 instance (PrimMonad m, PrimState m ~ s, MaybeLike e v, MVector c e) =>
     MonadCache Int v (Cache c s e m) where
@@ -110,15 +114,14 @@ type VectorCache s e = Cache Vector s e
 -- | This is just to be able to infer the type of the `VectorCache` element.
 class MaybeLike e v => VectorMemo v e | v -> e
 
--- | Evaluates `MonadMemo` computation using boxed vector which dynamically grows
--- to accomodate all keys
+-- | Evaluate computation using mutable boxed vector which dynamically grows to accomodate all requested keys 
 startEvalVectorMemo :: (PrimMonad m, VectorMemo v e) =>
                        VectorCache (PrimState m) e m a -> m a
 {-# INLINE startEvalVectorMemo #-}
 startEvalVectorMemo = genericStartEvalVectorMemo
 
--- | Evaluates `MonadMemo` computation using boxed vector which dynamically grows
--- to accomodate all keys.
+-- | Evaluate computation using mutable boxed vector
+-- which dynamically grows to accomodate all requested keys. 
 -- This function also returns the final content of the vector cache
 startRunVectorMemo :: (PrimMonad m, VectorMemo v e) =>
                       VectorCache (PrimState m) e m a -> m (a, Vector (PrimState m) e)
@@ -138,15 +141,15 @@ type UVectorCache s e = Cache UVector s e
 -- | This is just to be able to infer the type of the `UVectorCache` element.
 class MaybeLike e v => UVectorMemo v e | v -> e
 
--- | Evaluates `MonadMemo` computation using unboxed vector which dynamically grows
--- to accomodate all keys
+-- | Evaluate computation using mutable unboxed vector
+-- which dynamically grows to accomodate all requested keys 
 startEvalUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
                         UVectorCache (PrimState m) e m a -> m a
 {-# INLINE startEvalUVectorMemo #-}
 startEvalUVectorMemo = genericStartEvalVectorMemo
 
--- | Evaluates `MonadMemo` computation using unboxed vector which dynamically grows
--- to accomodate all keys.
+-- | Evaluate computation using mutable unboxed vector
+-- which dynamically grows to accomodate all requested keys.
 -- This function also returns the final content of the vector cache
 startRunUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
                        UVectorCache (PrimState m) e m a -> m (a, UVector (PrimState m) e)

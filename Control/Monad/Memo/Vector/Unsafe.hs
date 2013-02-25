@@ -58,9 +58,10 @@ import Control.Monad.Memo.Class
 import Control.Monad.Trans.Memo.ReaderCache
 
 
-newtype Container c k e = Container { toVector :: c k e }
+newtype Container vec = Container { toVector :: vec }
 
-type Cache c k e = ReaderCache (Container c k e)
+-- | Generic Vector-based memo cache
+type Cache vec k e = ReaderCache (Container (vec k e))
 
 instance (PrimMonad m, PrimState m ~ s, MaybeLike e v, MVector c e) =>
     MonadCache Int v (Cache c s e m) where
@@ -100,16 +101,26 @@ type VectorCache s e = Cache Vector s e
 -- | This is just to be able to infer the type of the `VectorCache` element.
 class MaybeLike e v => VectorMemo v e | v -> e
 
--- | Evaluates `MonadMemo` computation using boxed vector with unsafe operations
+-- | Evaluate computation using mutable boxed vector and unsafe operations
+--
+-- Vector length must covers all possible keys used in computation
+-- otherwise the behaviour is undefined (i.e. segfault)
 unsafeEvalVectorMemo :: (PrimMonad m, VectorMemo v e) =>
-                        VectorCache (PrimState m) e m a -> Int -> m a
+                        VectorCache (PrimState m) e m a -- ^memoized computation
+                     -> Int                             -- ^vector length 
+                     -> m a                             -- ^result
 {-# INLINE unsafeEvalVectorMemo #-}
 unsafeEvalVectorMemo = genericUnsafeEvalVectorMemo
 
--- | Evaluates `MonadMemo` computation using boxed vector with unsafe operations.
+-- | Evaluate computation using mutable boxed vector and unsafe operations.
 -- It also returns the final content of the vector cache
+--
+-- Vector length must covers all possible keys used in computation
+-- otherwise the behaviour is undefined (i.e. segfault)
 unsafeRunVectorMemo :: (PrimMonad m, VectorMemo v e) =>
-                       VectorCache (PrimState m) e m a -> Int -> m (a, Vector (PrimState m) e)
+                       VectorCache (PrimState m) e m a -- ^memoized computation
+                    -> Int                             -- ^vector length
+                    -> m (a, Vector (PrimState m) e)   -- ^result and final vector cache
 {-# INLINE unsafeRunVectorMemo #-}
 unsafeRunVectorMemo = genericUnsafeRunVectorMemo
 
@@ -123,19 +134,29 @@ type UVector = UM.MVector
 -- | `MonadCache` based on unboxed vector
 type UVectorCache s e = Cache UVector s e
 
--- | This is just to be able to infer the type of the `UVectorCache` element.
+-- | This is just to be able to infer the type of the `UVectorCache` element
 class MaybeLike e v => UVectorMemo v e | v -> e
 
--- | Evaluates `MonadMemo` computation using unboxed vector with unsafe operations
+-- | Evaluate computation using mutable unboxed vector and unsafe operations
+--
+-- Vector length must covers all possible keys used in computation
+-- otherwise the behaviour is undefined (i.e. segfault)
 unsafeEvalUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
-                         UVectorCache (PrimState m) e m a -> Int -> m a
+                         UVectorCache (PrimState m) e m a -- ^memoized computation
+                      -> Int                              -- ^vector length
+                      -> m a                              -- ^result
 {-# INLINE unsafeEvalUVectorMemo #-}
 unsafeEvalUVectorMemo = genericUnsafeEvalVectorMemo
 
--- | Evaluates `MonadMemo` computation using unboxed vector with unsafe operations.
+-- | Evaluate computation using mutable boxed vector and unsafe operations.
 -- It also returns the final content of the vector cache
+--
+-- Vector length must covers all possible keys used in computation
+-- otherwise the behaviour is undefined (i.e. segfault)
 unsafeRunUVectorMemo :: (PrimMonad m, UVectorMemo v e, MVector UVector e) =>
-                        UVectorCache (PrimState m) e m a -> Int -> m (a, UVector (PrimState m) e)
+                        UVectorCache (PrimState m) e m a -- ^memoized computation
+                     -> Int                              -- ^vector length
+                     -> m (a, UVector (PrimState m) e)   -- ^result and final vector cache
 {-# INLINE unsafeRunUVectorMemo #-}
 unsafeRunUVectorMemo = genericUnsafeRunVectorMemo
 
