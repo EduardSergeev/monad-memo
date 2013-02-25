@@ -19,7 +19,7 @@ In addition unboxed `UArrayCache` can only store unboxed types (but it does it v
 
 {-# LANGUAGE NoImplicitPrelude,
   MultiParamTypeClasses, FunctionalDependencies,
-  FlexibleInstances, FlexibleContexts,
+  FlexibleInstances, FlexibleContexts, TypeSynonymInstances,
   UndecidableInstances, TypeFamilies #-}
 
 module Control.Monad.Memo.Array

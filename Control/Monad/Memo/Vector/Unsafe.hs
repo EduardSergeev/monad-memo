@@ -17,7 +17,7 @@ Faster than default implementation but you must be sure that your code doesn't t
 {-# LANGUAGE NoImplicitPrelude,
   MultiParamTypeClasses, FunctionalDependencies,
   FlexibleInstances, FlexibleContexts, TypeFamilies,
-  UndecidableInstances #-}
+  UndecidableInstances, TypeSynonymInstances #-}
 
 module Control.Monad.Memo.Vector.Unsafe
  (

@@ -11,7 +11,8 @@ Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization m
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses,
+  FlexibleInstances, TypeSynonymInstances #-}
 
 module Control.Monad.Trans.Memo.State
 (

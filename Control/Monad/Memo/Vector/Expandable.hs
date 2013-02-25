@@ -11,7 +11,7 @@ Portability :  non-portable (multi-param classes, flexible instances)
 
 {-# LANGUAGE NoImplicitPrelude,
   MultiParamTypeClasses, FunctionalDependencies,
-  FlexibleInstances, FlexibleContexts,
+  FlexibleInstances, FlexibleContexts, TypeSynonymInstances,
   UndecidableInstances, TypeFamilies #-}
 
 module Control.Monad.Memo.Vector.Expandable

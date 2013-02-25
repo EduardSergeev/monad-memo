@@ -18,7 +18,7 @@ Limitations: Since `Data.Vector.Generic.Mutable.MVector` is used as `MonadCache`
 {-# LANGUAGE NoImplicitPrelude,
   MultiParamTypeClasses, FunctionalDependencies,
   FlexibleInstances, FlexibleContexts, TypeFamilies,
-  UndecidableInstances, GeneralizedNewtypeDeriving #-}
+  UndecidableInstances, TypeSynonymInstances #-}
 
 module Control.Monad.Memo.Vector
  (
