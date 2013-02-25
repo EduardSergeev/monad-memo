@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Control.Monad.Memo.Test
+module MemoTest
 (
        tests
 ) where
