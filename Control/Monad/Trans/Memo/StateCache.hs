@@ -1,17 +1,17 @@
 {- |
-Module      :  Control.Monad.Memo
-Copyright   :  (c) Eduard Sergeev 2011
+Module      :  Control.Monad.Trans.Memo.StateCache
+Copyright   :  (c) Eduard Sergeev 2013
 License     :  BSD-style (see the file LICENSE)
 
 Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, flexible instances)
 
-Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization monad transformer
+Generic StateCache - similar to `Control.Monad.Trans.State.Strict.StateT` but optimised for carrying cache container
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude, BangPatterns #-}
 
 module Control.Monad.Trans.Memo.StateCache
 (
@@ -37,14 +37,14 @@ newtype StateCache c m a = StateCache { runStateCache :: c -> m (a, c) }
 -- | Evaluates computation discarding the resulting container 
 evalStateCache :: Monad m => StateCache c m a -> c -> m a
 {-# INLINE evalStateCache #-}
-evalStateCache m c = do
+evalStateCache m !c = do
     (a, _) <- runStateCache m c
     return a
 
 -- | Returns internal container
 container :: Monad m => StateCache c m c
 {-# INLINE container #-}
-container = StateCache $ \c -> return (c, c)
+container = StateCache $ \ !c -> return (c, c)
 
 -- | Assigns new value to internal container
 setContainer :: Monad m => c -> StateCache c m ()
@@ -54,14 +54,14 @@ setContainer c = StateCache $ \_ -> return ((), c)
 
 instance (Functor m) => Functor (StateCache c m) where
     {-# INLINE fmap #-}
-    fmap f m = StateCache $ \c ->
+    fmap f m = StateCache $ \ !c ->
         fmap (\ (a, c') -> (f a, c')) (runStateCache m c)
 
 instance (Functor m, Monad m) => Applicative (StateCache c m) where
     {-# INLINE pure #-}
     pure = return
     {-# INLINE (<*>) #-}
-    fa <*> aa = StateCache $ \c -> do
+    fa <*> aa = StateCache $ \ !c -> do
         (f, c') <- runStateCache fa c
         (a, c'') <- runStateCache aa c'
         return (f a, c'')
@@ -74,14 +74,14 @@ instance (Functor m, MonadPlus m) => Alternative (StateCache c m) where
 
 instance (Monad m) => Monad (StateCache c m) where
     {-# INLINE return #-}
-    return a = StateCache $ \c -> return (a, c)
+    return a = StateCache $ \ !c -> return (a, c)
     {-# INLINE (>>=) #-}
-    m >>= k  = StateCache $ \c -> do
-        (a, c') <- runStateCache m c
+    m >>= k  = StateCache $ \ !c -> do
+        (a, !c') <- runStateCache m c
         runStateCache (k a) c'
     {-# INLINE (>>) #-}
-    m >> n   = StateCache $ \c -> do
-        (_, c') <- runStateCache m c
+    m >> n   = StateCache $ \ !c -> do
+        (_, !c') <- runStateCache m c
         runStateCache n c'         
     fail str = StateCache $ \_ -> fail str
 
@@ -89,14 +89,14 @@ instance (MonadPlus m) => MonadPlus (StateCache c m) where
     {-# INLINE mzero #-}
     mzero       = StateCache $ const mzero
     {-# INLINE mplus #-}
-    m `mplus` n = StateCache $ \c -> runStateCache m c `mplus` runStateCache n c
+    m `mplus` n = StateCache $ \ !c -> runStateCache m c `mplus` runStateCache n c
 
 instance (MonadFix m) => MonadFix (StateCache c m) where
-    mfix f = StateCache $ \c -> mfix $ \ ~(a, _) -> runStateCache (f a) c
+    mfix f = StateCache $ \ !c -> mfix $ \ ~(a, _) -> runStateCache (f a) c
 
 instance MonadTrans (StateCache c) where
     {-# INLINE lift #-}
-    lift m = StateCache $ \c -> do
+    lift m = StateCache $ \ !c -> do
         a <- m
         return (a, c)
 

@@ -11,6 +11,7 @@ VectorCache - mutable-vector-based `MonadCache` with unsafe operations.
 
 This is a version of "Control.Monad.Memo.Mutable.Vector" but implemented using /unsafe*/ vector operations.
 Faster than default implementation but you must be sure that your code doesn't try to read/write outside vector boundaries.
+
 -}
 
 {-# LANGUAGE NoImplicitPrelude,

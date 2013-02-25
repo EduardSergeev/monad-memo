@@ -7,9 +7,11 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable
 
+Generic StateCache - similar to `Control.Monad.Trans.Reader.ReaderT` but optimised for carrying cache container
+
 -}
 
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude, BangPatterns #-}
 
 module Control.Monad.Trans.Memo.ReaderCache
 (
@@ -19,7 +21,6 @@ module Control.Monad.Trans.Memo.ReaderCache
 
 ) where
 
-import Prelude (seq)
 import Data.Function
 import Control.Applicative
 import Control.Monad
@@ -35,43 +36,45 @@ newtype ReaderCache c m a = ReaderCache { evalReaderCache :: c -> m a }
 -- | Returns internal container
 container :: Monad m => ReaderCache c m c
 {-# INLINE container #-}
-container = ReaderCache return
+container = ReaderCache $ \ !c -> return c
 
 
 instance (Functor m) => Functor (ReaderCache c m) where
     {-# INLINE fmap #-}
-    fmap f m = ReaderCache $ \c -> c `seq` fmap f (evalReaderCache m c)
+    fmap f m = ReaderCache $ \ !c -> fmap f (evalReaderCache m c)
 
 instance (Applicative m) => Applicative (ReaderCache arr m) where
     {-# INLINE pure #-}
     pure a  = ReaderCache $ \_ -> pure a
     {-# INLINE (<*>) #-}
-    f <*> v = ReaderCache $ \ r -> evalReaderCache f r <*> evalReaderCache v r
+    f <*> v = ReaderCache $ \ !c -> evalReaderCache f c <*> evalReaderCache v c
 
 instance (Alternative m) => Alternative (ReaderCache c m) where
     {-# INLINE empty #-}
     empty   = ReaderCache $ const empty
     {-# INLINE (<|>) #-}
-    m <|> n = ReaderCache $ \c -> c `seq` evalReaderCache m c <|> evalReaderCache n c
+    m <|> n = ReaderCache $ \ !c -> evalReaderCache m c <|> evalReaderCache n c
 
 instance (Monad m) => Monad (ReaderCache c m) where
     {-# INLINE return #-}
-    return a = ReaderCache $ \c -> c `seq` return a
+    return a = ReaderCache $ \ !c -> return a
     {-# INLINE (>>=) #-}
-    m >>= k  = ReaderCache $ \c -> c `seq` do
+    m >>= k  = ReaderCache $ \ !c -> do
         a <- evalReaderCache m c
         evalReaderCache (k a) c
     {-# INLINE (>>) #-}
-    m >> k   = m >>= const k
+    m >> k   = ReaderCache $ \ !c -> do
+        evalReaderCache m c
+        evalReaderCache k c
 
 instance (MonadPlus m) => MonadPlus (ReaderCache c m) where
     {-# INLINE mzero #-}
     mzero       = lift mzero
     {-# INLINE mplus #-}
-    m `mplus` n = ReaderCache $ \c -> c `seq` evalReaderCache m c `mplus` evalReaderCache n c
+    m `mplus` n = ReaderCache $ \ !c -> evalReaderCache m c `mplus` evalReaderCache n c
 
 instance (MonadFix m) => MonadFix (ReaderCache c m) where
-    mfix f = ReaderCache $ \c -> mfix $ \a -> evalReaderCache (f a) c
+    mfix f = ReaderCache $ \ !c -> mfix $ \a -> evalReaderCache (f a) c
 
 instance MonadTrans (ReaderCache c) where
     {-# INLINE lift #-}
