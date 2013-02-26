@@ -21,7 +21,7 @@ module Data.MapLike (
 
 import Data.Maybe
 
--- | And abstract interface to the container which can store 'v' indexed by 'k'
+-- | An abstract interface to the container which can store 'v' indexed by 'k'
 class MapLike c k v | c -> k, c -> v where
     lookup :: k -> c -> Maybe v
     add :: k -> v -> c -> c

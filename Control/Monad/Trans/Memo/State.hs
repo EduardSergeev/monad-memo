@@ -11,87 +11,78 @@ Defines "MemoStateT" - generalized (to any "Data.MapLike" content) memoization m
 
 -}
 
-{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses,
+  FlexibleInstances, TypeSynonymInstances #-}
 
 module Control.Monad.Trans.Memo.State
 (
  
+    -- * MemoStateT monad transformer
     MemoStateT(..),
     runMemoStateT,
     evalMemoStateT,
-
+    -- * MemoState monad
     MemoState,
     runMemoState,
     evalMemoState,
+    -- * Internal
+    Container(..)
 
 ) where
 
 
 import Data.Tuple
-import Data.Ord
 import Data.Function
 import Control.Applicative
-import Control.Monad.State.Strict
+import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Identity
 
 import qualified Data.MapLike as M
 import Control.Monad.Memo.Class
+import Control.Monad.Trans.Memo.StateCache
 
 
--- MonadMemo and MonadCache implementation using std. 'Control.Monad.State' transformer with generic 'Data.MapLike' container for a cache
-newtype MemoStateT c k v m a = MemoStateT { toStateT :: StateT c m a }
+newtype Container s = Container { toState :: s }
+
+-- | Memoization monad transformer based on `StateCache`
+-- to be used with pure cache containers which support `M.MapLike` interface
+type MemoStateT s k v = StateCache (Container s)
 
 
-runMemoStateT :: MemoStateT c k v m a -> c -> m (a, c)
-runMemoStateT = runStateT . toStateT
+-- | Returns the pair of the result of `MonadMemo` computation
+-- along with the final state of the internal pure container wrapped in monad
+runMemoStateT :: Monad m => MemoStateT s k v m a -> s -> m (a, s)
+runMemoStateT m s = do
+  (a, c) <- runStateCache m (Container s)
+  return (a, toState c)
 
-evalMemoStateT :: (Monad m) => MemoStateT c k v m a -> c -> m a
+-- | Returns the result of `MonadMemo` computation wrapped in monad.
+-- This function discards the cache
+evalMemoStateT :: Monad m => MemoStateT c k v m a -> c -> m a
 evalMemoStateT m s = runMemoStateT m s >>= return . fst
 
 
+-- | Memoization monad based on `StateCache`
+-- to be used with pure cache containers which support `M.MapLike` interface
 type MemoState c k v = MemoStateT c k v Identity
 
+-- | Returns the pair of the result of `MonadMemo` computation
+-- along with the final state of the internal pure container
 runMemoState :: MemoState c k v a -> c -> (a, c)
 runMemoState m = runIdentity . runMemoStateT m
 
+-- | Returns the result of `MonadMemo` computation discarding the cache
 evalMemoState :: MemoState c k v a -> c -> a
 evalMemoState m = runIdentity . evalMemoStateT m
 
 
-instance (Functor m) => Functor (MemoStateT c k v m) where
-    fmap f m = MemoStateT $ fmap f (toStateT m)
-
-instance (Functor m, Monad m) => Applicative (MemoStateT c k v m) where
-    pure  = return 
-    (<*>) = ap
-
-instance (Functor m, MonadPlus m) => Alternative (MemoStateT l k v m) where
-    empty = mzero
-    (<|>) = mplus
-
-instance (Monad m) => Monad (MemoStateT l k v m) where
-    return = MemoStateT . return
-    m >>= k = MemoStateT $ (toStateT m) >>= (toStateT . k) 
-    m >> n = MemoStateT $ (toStateT m) >> (toStateT n) 
-
-instance (MonadPlus m) => MonadPlus (MemoStateT l k v m) where
-    mzero       = MemoStateT mzero
-    m `mplus` n = MemoStateT $ toStateT m `mplus` toStateT n
-
-instance (MonadFix m) => MonadFix (MemoStateT l k v m) where
-    mfix f = MemoStateT $ mfix (toStateT . f)
-
-
 instance (Monad m, M.MapLike c k v) => MonadCache k v (MemoStateT c k v m) where
-    lookup k = MemoStateT $ get >>= return . M.lookup k
-    add k v  = MemoStateT $ modify $ \m -> M.add k v m
+    {-# INLINE lookup #-}
+    lookup k = container >>= return . M.lookup k . toState
+    {-# INLINE add #-}
+    add k v  = container >>= setContainer . Container . M.add k v . toState
 
 instance (Monad m, M.MapLike c k v) => MonadMemo k v (MemoStateT c k v m) where
+    {-# INLINE memo #-}
     memo = memol0
-
-
-instance (MonadIO m) => MonadIO (MemoStateT l k v m) where
-    liftIO = lift . liftIO
-
-instance MonadTrans (MemoStateT l k v) where
-    lift = MemoStateT . lift

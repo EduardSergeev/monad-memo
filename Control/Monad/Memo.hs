@@ -17,10 +17,11 @@ module Control.Monad.Memo (
     module Control.Monad,
     module Control.Monad.Trans,
     module Data.MapLike,
+    module Data.MaybeLike,
     -- * MonadMemo class
     MonadMemo(..),
     -- * Generalized Memo monad
-    MemoState(..),
+    MemoState,
     runMemoState,
     evalMemoState,
     -- * Generalized MemoStateT monad transformer
@@ -34,11 +35,36 @@ module Control.Monad.Memo (
     startRunMemo,
     startEvalMemo,
     -- * Map-based MemoT monad transformer
-    MemoT(..),
+    MemoT,
     runMemoT,
     evalMemoT,
     startRunMemoT,
     startEvalMemoT,
+
+    -- * Array-based Memo monad
+    -- ** ArrayCache for boxed types
+    ArrayCache,
+    ArrayMemo,
+    evalArrayMemo,
+    runArrayMemo,
+    -- ** ArrayCache for unboxed types
+    UArrayCache,
+    UArrayMemo,
+    evalUArrayMemo,
+    runUArrayMemo,
+
+    -- * Vector-based Memo monad
+    -- ** VectorCache for boxed types
+    VectorCache,
+    VectorMemo,
+    evalVectorMemo,
+    runVectorMemo,
+    -- ** VectorCache for unboxed types
+    UVectorCache,
+    UVectorMemo,
+    evalUVectorMemo,
+    runUVectorMemo,
+
     -- * Adapter for memoization of multi-argument functions
     for2,
     for3,
@@ -61,25 +87,29 @@ module Control.Monad.Memo (
 
     -- * Example 4: Memoization of multi-argument function
     -- $multiExample
+
+    -- * Example 5: Alternative memo caches
+    -- $arrayCacheExample
     ) where
 
 import Control.Monad.Memo.Class
 
---import Control.Monad.Trans.Memo.Strict (
---    MemoT(..), runMemoT, startRunMemoT, evalMemoT, startEvalMemoT,
---    Memo, runMemo, startRunMemo, evalMemo, startEvalMemo )
-
-import Control.Monad.Trans.Memo.State -- (
---    MemoT(..), runMemoT, evalMemoT,
---    Memo, runMemo, evalMemo )
+import Control.Monad.Trans.Memo.State
 
 import Control.Monad.Trans.Memo.Map
 
-import Data.MapLike
+import Control.Monad.Memo.Array
+import Control.Monad.Memo.Array.Instances()
+import Control.Monad.Memo.Vector
+import Control.Monad.Memo.Vector.Instances()
 
+import Data.MapLike
+import Data.MaybeLike
+import Data.MaybeLike.Instances()
 
 import Control.Monad
 import Control.Monad.Trans
+
 
 {- $fibExample
 Memoization can be specified whenever monadic computation is taking place.
@@ -200,5 +230,36 @@ For two-argument function we can use 'for2' function adapter:
 >
 >evalAckm :: (Num n, Ord n) => n -> n -> n
 >evalAckm n m = startEvalMemo $ ackm n m
+
+-}
+
+{- $arrayCacheExample
+Given a monadic function definition it is often possible to execute it using different memo-cache ('MonadCache') implementations. For example 'ArrayCache' when used can dramatically reduce function computation time and memory usage.
+
+For example the same Fibonacci function:
+
+>fibm 0 = return 0
+>fibm 1 = return 1
+>fibm n = (+) <$> memo fibm (n-1) <*> memo fibm (n-2)
+
+can easily be run using mutable array in 'Control.Monad.ST.ST' monad:
+
+>evalFibmSTA :: Integer -> Integer
+>evalFibmSTA n = runST $ evalArrayMemo (fibm n) (0,n)
+
+or, if we change its return type to a primitive (unboxed) value, we can use even more efficient unboxed array 'Data.Array.ST.STUArray':
+
+>evalFibmSTUA :: Integer -> Double
+>evalFibmSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
+
+Finally if we want to achieve the best performance within monad-memo, we can switch to unboxed `Vector`-based `MemoCache` (vectors support only `Int` as a key so we have to change the type):
+
+>evalFibmSTUV :: Int -> Double
+>evalFibmSTUV n = runST $ evalUVectorMemo (fibm n) (n+1)
+
+Note that `IO` monad can be used instead of `Control.Monad.ST.ST`:
+
+>evalFibmIOUV :: Int -> IO Double
+>evalFibmIOUV n = evalUVectorMemo (fibm n) (n+1)
 
 -}

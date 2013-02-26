@@ -1,7 +1,7 @@
 
-module Main where
+module Main (main) where
 
-import Control.Monad.Memo.Test
+import MemoTest
 import Test.Framework (defaultMain)
 
 
