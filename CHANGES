@@ -12,3 +12,6 @@
 - VectorCache (and flavours) vector-based MonadCache for even better performance
 - Bug fixes in transformer implementations (Reader, State, RWS)
 - Simple benchmark included
+0.4.1
+- Documentation fixes
+- `Example` is renamed to `example` and is excluded from package's module hierarchy

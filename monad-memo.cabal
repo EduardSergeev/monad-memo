@@ -1,12 +1,32 @@
 Name:               monad-memo
 
-Version:            0.4.0
+Version:            0.4.1
 
 -- A short (one-line) description of the package.
 Synopsis:           Memoization monad transformer
 
 -- A longer description of the package.
-Description:        Memoization monad transformer supporting most of the standard monad transformers and a range of memoization cache types: from default pure maps to extremely fast mutable vectors 
+Description:
+     Memoization monad transformer supporting most of the standard monad transformers and a range of memoization cache types: from default pure maps to extremely fast mutable vectors
+     .
+     To add memoization behaviour to a monadic function:
+     .
+     1) Add 'Control.Monad.Memo.memo' combinator at the point when memoization is required (i.e. recursive call)
+        .
+        >import Control.Monad.Memo
+        >
+        >fibm 0 = return 0
+        >fibm 1 = return 1
+        >fibm n = do
+        >  n1 <- memo fibm (n-1)
+        >  n2 <- memo fibm (n-2)
+        >  return (n1+n2)
+        .
+     2) Use approprite /*eval*/ or /*run*/ function to evaluate resulting `MonadMemo` monad:
+        .
+        >startEvalMemo (fibm 100)
+        .
+     See detailed description and examples: "Control.Monad.Memo"
 
 -- URL for the project homepage or repository.
 Homepage:           https://github.com/EduardSergeev/monad-memo
@@ -44,11 +64,7 @@ source-repository head
 source-repository this
   type:             git
   location:         https://github.com/EduardSergeev/monad-memo.git
-  tag:              0.4.0
-
-Flag examples
-  description:      Builds examples
-  default:          False
+  tag:              0.4.1
 
 
 Library
@@ -78,14 +94,6 @@ Library
           Data.MapLike.Instances,
           Data.MaybeLike,
           Data.MaybeLike.Instances
-
-  if flag(examples)
-     exposed-modules:
-          Example.Basic,
-          Example.Customisation.MaybeLike,
-          Example.Customisation.Array,
-          Example.Customisation.Vector
-  ghc-options:      -O2
 
 Test-Suite tests
   type:             exitcode-stdio-1.0
