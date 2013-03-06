@@ -7,8 +7,7 @@ Maintainer  :  eduard.sergeev@gmail.com
 Stability   :  experimental
 Portability :  non-portable (multi-param classes, functional dependencies)
 
-Exports all necessary bits and pieces (default set) for memoization.
-It should be suficient to import just thim module to be able to ad memoization to your monadic code
+Importing just this module is sufficient for most cases of the package usage
 
 -}
 
@@ -116,14 +115,14 @@ Memoization can be specified whenever monadic computation is taking place.
 Including recursive definition. Classic example: Fibonacci number function:
 Here is simple non-monadic definition of it
 
->fib :: (Num n) => n -> n
+>fib :: (Eq n, Num n) => n -> n
 >fib 0 = 0
 >fib 1 = 1
 >fib n = fib (n-1) + fib (n-2)
 
 To use 'Memo' monad we need to convert it into monadic form:
 
->fibm :: (Num n, Monad m) => n -> m n
+>fibm :: (Eq n, Num n, Monad m) => n -> m n
 >fibm 0 = return 0
 >fibm 1 = return 1
 >fibm n = do
@@ -133,7 +132,7 @@ To use 'Memo' monad we need to convert it into monadic form:
 
 Then we can specify which computation we want to memoize with 'memo' (both recursive calls to (n-1) and (n-2)):
 
->fibm :: (Num n, Ord n) => n -> Memo n n n
+>fibm :: (Eq n, Num n, Ord n) => n -> Memo n n n
 >fibm 0 = return 0
 >fibm 1 = return 1
 >fibm n = do
@@ -145,11 +144,11 @@ NB: 'Ord' is required since internaly Memo implementation uses 'Data.Map' to sto
 
 Then it can be run with 'startEvalMemo'
 
->startEvalMemo . fibm $ 5
+>startEvalMemo (fibm 100)
 
 Or using applicative form:
 
->fibm :: (Num n, Ord n) => n -> Memo n n n
+>fibm :: (Eq n, Num n, Ord n) => n -> Memo n n n
 >fibm 0 = return 0
 >fibm 1 = return 1
 >fibm n = (+) <$> memo fibm (n-1) <*> memo fibm (n-2)
@@ -176,7 +175,7 @@ Stacking them together gives us te overall type for our combined memoization mon
 >boo 0 = return ""
 >boo n = do
 >  n1 <- memol1 boo (n-1)           -- uses next in stack transformer (memol_1_): MemoBoo is nested in MemoFib
->  fn <- memol0 fibm2 floor (n-1)   -- uses current transformer (memol_0_): MemoFib
+>  fn <- memol0 fibm2 (floor (n-1))   -- uses current transformer (memol_0_): MemoFib
 >  return (show fn ++ n1)
 
 >fibm2 :: Integer -> MemoFB Integer 
@@ -188,6 +187,7 @@ Stacking them together gives us te overall type for our combined memoization mon
 >  f2 <- memol0 fibm2 (n-2)
 >  return (f1 + f2 + floor (read l))
 
+>evalFibM2 :: Integer -> Integer
 >evalFibM2 = startEvalMemo . startEvalMemoT . fibm2
 
 -}
@@ -197,7 +197,7 @@ Stacking them together gives us te overall type for our combined memoization mon
 
 With 'MonadWriter':
 
->fibmw :: (Num n, MonadWriter String m, MonadMemo n n m) => n -> m n
+>fibmw :: (MonadWriter String m, MonadMemo Integer Integer m) => Integer -> m Integer
 >fibmw 0 = return 0
 >fibmw 1 = return 1
 >fibmw n = do
@@ -206,6 +206,7 @@ With 'MonadWriter':
 >  tell $ show n
 >  return (f1+f2)
 
+>evalFibmw :: Integer -> (Integer, String)
 >evalFibmw = startEvalMemo . runWriterT . fibmw
 
 -}
@@ -215,7 +216,7 @@ Functions with more than one argument (in curried form) can also be memoized wit
 For two-argument function we can use 'for2' function adapter:
 
 >-- Ackerman function classic definition
->ack :: Num n => n -> n -> n
+>ack :: (Eq n, Num n) => n -> n -> n
 >ack 0 n = n+1
 >ack m 0 = ack (m-1) 1
 >ack m n = ack (m-1) (ack m (n-1))
