@@ -43,9 +43,8 @@ import Control.Monad
 import Control.Monad.Trans.Class
 
 import Control.Monad.Trans.Cont
-import Control.Monad.Trans.Error
+import Control.Monad.Trans.Except
 import Control.Monad.Trans.Identity
-import Control.Monad.Trans.List
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Reader
 import qualified Control.Monad.Trans.State.Lazy as SL
@@ -161,11 +160,8 @@ instance (MonadCache k v m) => MonadMemo k v (ContT r m) where
 instance (MonadCache k (Maybe v) m) => MonadMemo k v (MaybeT m) where
     memo f = MaybeT . memol0 (runMaybeT . f)
 
-instance (MonadCache k [v] m) => MonadMemo k v (ListT m) where
-    memo f = ListT . memol0 (runListT . f)
-
-instance (Error e, MonadCache k  (Either e v) m) => MonadMemo k v (ErrorT e m) where
-    memo f = ErrorT . memol0 (runErrorT . f)
+instance (MonadCache k  (Either e v) m) => MonadMemo k v (ExceptT e m) where
+    memo f = ExceptT . memol0 (runExceptT . f)
 
 instance (MonadCache (r,k) v m) => MonadMemo k v (ReaderT r m) where
     memo f k = ReaderT $ \r -> memol0 (\(r, k) -> runReaderT (f k) r) (r, k)

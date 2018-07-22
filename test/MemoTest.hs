@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 
 module MemoTest
 (
@@ -189,10 +189,6 @@ unfringem as = do
   t <- memo unfringem l
   u <- memo unfringem k
   return (Fork t u)
-
-prop_ListEqv :: SmallList Char -> Bool
-prop_ListEqv (SmallList ls) =
-    unfringe ls == (startEvalMemo . runListT . unfringem $ ls)
 
 
 -- | Mutual recursion
@@ -416,7 +412,6 @@ tests = [
                        testProperty "WriterEqv"         prop_WriterEqv,
                        testProperty "ContEqv"           prop_ContEqv,
                        testProperty "ContSTUEqv"        prop_ContSTUEqv,
-                       testProperty "ListEqv"           prop_ListEqv,
                        testProperty "StateEqv"          prop_StateEqv
                       ],
         testGroup "Others" [
