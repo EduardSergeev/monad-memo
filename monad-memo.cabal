@@ -50,9 +50,9 @@ Build-type:         Simple
 
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:      >=1.8
+Cabal-version:      >=1.10
 
-Tested-with:        GHC==8.4.3
+Tested-with:        GHC==7.10.3, GHC==8.4.3
 
 Extra-source-files:
   CHANGES
@@ -68,6 +68,7 @@ source-repository this
 
 
 Library
+  default-language: Haskell2010
   build-depends:
           base >= 3.0 && <= 5.0,
           transformers >= 0.2,
@@ -75,7 +76,6 @@ Library
           array >= 0.3,
           vector >= 0.7,
           primitive >= 0.3
-  
   exposed-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
@@ -95,6 +95,7 @@ Library
           Data.MaybeLike.Instances
 
 Test-Suite tests
+  default-language: Haskell2010
   type:             exitcode-stdio-1.0
   hs-source-dirs:   . test
   main-is:          Main.hs
@@ -109,7 +110,6 @@ Test-Suite tests
           QuickCheck >= 2.0,
           test-framework-quickcheck2 >= 0.2.9,
           test-framework >= 0.3.3
-
   other-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
@@ -129,8 +129,8 @@ Test-Suite tests
           Data.MaybeLike.Instances
           MemoTest          
 
-
 Benchmark all
+  default-language: Haskell2010
   type:             exitcode-stdio-1.0
   hs-source-dirs:   . benchmark
   main-is:          Main.hs
@@ -142,8 +142,6 @@ Benchmark all
           vector >= 0.7,
           primitive >= 0.3,
           criterion >= 0.6
-  ghc-options:      -O2
-
   other-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
