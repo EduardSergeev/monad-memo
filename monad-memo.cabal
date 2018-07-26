@@ -52,7 +52,7 @@ Build-type:         Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:      >=1.8
 
-Tested-with:        GHC==7.0.4, GHC==7.4.2, GHC==7.6.2
+Tested-with:        GHC==8.4.3
 
 Extra-source-files:
   CHANGES
@@ -64,13 +64,12 @@ source-repository head
 source-repository this
   type:             git
   location:         https://github.com/EduardSergeev/monad-memo.git
-  tag:              0.4.1
+  tag:              0.5.0
 
 
 Library
   build-depends:
           base >= 3.0 && <= 5.0,
-          mtl >= 2.0,
           transformers >= 0.2,
           containers >= 0.3,
           array >= 0.3,
@@ -101,7 +100,6 @@ Test-Suite tests
   main-is:          Main.hs
   build-depends: 
           base >= 3.0 && <= 5.0,
-          mtl >= 2.0,
           transformers >= 0.2,
           containers >= 0.3,
           array >= 0.3,
@@ -112,6 +110,25 @@ Test-Suite tests
           test-framework-quickcheck2 >= 0.2.9,
           test-framework >= 0.3.3
 
+  other-modules:
+          Control.Monad.Memo,
+          Control.Monad.Memo.Class,
+          Control.Monad.Trans.Memo.ReaderCache,
+          Control.Monad.Trans.Memo.StateCache,
+          Control.Monad.Trans.Memo.State,
+          Control.Monad.Trans.Memo.Map,
+          Control.Monad.Memo.Array,
+          Control.Monad.Memo.Array.Instances,
+          Control.Monad.Memo.Vector,
+          Control.Monad.Memo.Vector.Expandable,
+          Control.Monad.Memo.Vector.Unsafe,
+          Control.Monad.Memo.Vector.Instances,
+          Data.MapLike,
+          Data.MapLike.Instances,
+          Data.MaybeLike,
+          Data.MaybeLike.Instances
+          MemoTest          
+
 
 Benchmark all
   type:             exitcode-stdio-1.0
@@ -119,7 +136,6 @@ Benchmark all
   main-is:          Main.hs
   build-depends:
           base >= 3.0 && <= 5.0,
-          mtl >= 2.0,
           transformers >= 0.2,
           containers >= 0.3,
           array >= 0.3,
@@ -127,3 +143,21 @@ Benchmark all
           primitive >= 0.3,
           criterion >= 0.6
   ghc-options:      -O2
+
+  other-modules:
+          Control.Monad.Memo,
+          Control.Monad.Memo.Class,
+          Control.Monad.Trans.Memo.ReaderCache,
+          Control.Monad.Trans.Memo.StateCache,
+          Control.Monad.Trans.Memo.State,
+          Control.Monad.Trans.Memo.Map,
+          Control.Monad.Memo.Array,
+          Control.Monad.Memo.Array.Instances,
+          Control.Monad.Memo.Vector,
+          Control.Monad.Memo.Vector.Expandable,
+          Control.Monad.Memo.Vector.Unsafe,
+          Control.Monad.Memo.Vector.Instances,
+          Data.MapLike,
+          Data.MapLike.Instances,
+          Data.MaybeLike,
+          Data.MaybeLike.Instances 

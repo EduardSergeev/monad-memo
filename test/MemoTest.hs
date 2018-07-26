@@ -6,11 +6,10 @@ module MemoTest
 ) where
 
 import qualified Data.IntMap as IM
-import Control.Monad.Reader
-import Control.Monad.Writer
-import Control.Monad.State
-import Control.Monad.Cont
-import Control.Monad.List
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Writer
+import Control.Monad.Trans.State
+import Control.Monad.Trans.Cont
 import Control.Monad.ST
 
 import Test.QuickCheck
@@ -168,27 +167,6 @@ fibms n = do
 prop_StateEqv :: SmallInt Int -> SmallInt Int -> Bool
 prop_StateEqv (SmallInt s) (SmallInt n) =
     ((`runState`s) . fibs $ n) == (startEvalMemo . (`runStateT`s) . fibms $ n)
-
-
--- | With ListT
---
-data Tree a = Leaf !a | Fork (Tree a) (Tree a) deriving Eq
-
-partitions as = [ splitAt n as | n <- [1..length as - 1 ]]
-
-unfringe [a] = [Leaf a]
-unfringe as  = do
-  (l,k) <- partitions as
-  t <- unfringe l
-  u <- unfringe k
-  return (Fork t u)
-
-unfringem [a] = return (Leaf a)
-unfringem as = do
-  (l,k) <- ListT $ return (partitions as)
-  t <- memo unfringem l
-  u <- memo unfringem k
-  return (Fork t u)
 
 
 -- | Mutual recursion

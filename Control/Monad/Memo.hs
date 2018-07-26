@@ -14,7 +14,7 @@ Importing just this module is sufficient for most cases of the package usage
 
 module Control.Monad.Memo (
     module Control.Monad,
-    module Control.Monad.Trans,
+    module Control.Monad.Trans.Class,
     module Data.MapLike,
     module Data.MaybeLike,
     -- * MonadMemo class
@@ -107,7 +107,7 @@ import Data.MaybeLike
 import Data.MaybeLike.Instances()
 
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.Trans.Class
 
 
 {- $fibExample

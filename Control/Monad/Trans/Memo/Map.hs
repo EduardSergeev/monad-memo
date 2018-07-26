@@ -31,7 +31,8 @@ module Control.Monad.Trans.Memo.Map
 
 ) where
 
-import Control.Monad.Identity
+import Data.Functor.Identity
+import Control.Monad
 import Control.Monad.Trans.Memo.State
 
 import Data.MapLike.Instances()

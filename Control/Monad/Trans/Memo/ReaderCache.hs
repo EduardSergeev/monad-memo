@@ -24,8 +24,9 @@ module Control.Monad.Trans.Memo.ReaderCache
 import Data.Function
 import Control.Applicative
 import Control.Monad
+import Control.Monad.IO.Class
 import Control.Monad.Fix
-import Control.Monad.Trans
+import Control.Monad.Trans.Class
 
 
 -- | Generic memoization cache which uses provided container
