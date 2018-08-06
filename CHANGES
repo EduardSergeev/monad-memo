@@ -15,3 +15,10 @@
 0.4.1
 - Documentation fixes
 - `Example` is renamed to `example` and is excluded from package's module hierarchy
+
+0.5.0
+- Refresh project to be compilable with latest GHC and libraries
+- Remove dependency on `mtl` package (`transformers` is sufficient)
+- Use `Except` instead of depricated `Error`
+- Remove support for `ListT` transformer since it is now depricated
+- Use standard `StateT` & `ReaderT` for `MonadCache` implementations

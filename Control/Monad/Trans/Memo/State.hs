@@ -33,10 +33,10 @@ module Control.Monad.Trans.Memo.State
 
 import Data.Tuple
 import Data.Function
+import Data.Functor.Identity
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Trans
-import Control.Monad.Identity
+import Control.Monad.Trans.Class
 
 import qualified Data.MapLike as M
 import Control.Monad.Memo.Class

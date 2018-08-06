@@ -12,7 +12,6 @@ import Control.Monad.Memo
 import Control.Monad.Memo.Vector.Unsafe
 import Control.Monad.Memo.Vector.Expandable
 import Criterion.Main
-import Criterion.Config
 
 
 -- Fibonacci numbers
@@ -181,7 +180,7 @@ lcsSTUVE as bs = runST $ startEvalUVectorMemo (lcsm as bs)
 
 
 
-main = defaultMainWith defaultConfig (return ()) [
+main = defaultMainWith defaultConfig [
          bgroup "fib" [
            bgroup "pure" [
              bench "Map" $ whnf fibM n
@@ -198,14 +197,14 @@ main = defaultMainWith defaultConfig (return ()) [
            , bench "UVector exp" $ whnf fibSTUVE n
            ]
          , bgroup "IO" [
-             bench "Array" $ fibIOA n
-           , bench "UArray" $ fibIOUA n
-           , bench "Vector" $ fibIOV n
-           , bench "UVector" $ fibIOUV n
-           , bench "Vector unsafe" $ fibIOVU n
-           , bench "UVector unsafe" $ fibIOUVU n
-           , bench "Vector exp" $ fibIOVE n
-           , bench "UVector exp" $ fibIOUVE n
+             bench "Array" $ whnfIO (fibIOA n)
+           , bench "UArray" $ whnfIO (fibIOUA n)
+           , bench "Vector" $ whnfIO (fibIOV n)
+           , bench "UVector" $ whnfIO (fibIOUV n)
+           , bench "Vector unsafe" $ whnfIO (fibIOVU n)
+           , bench "UVector unsafe" $ whnfIO (fibIOUVU n)
+           , bench "Vector exp" $ whnfIO (fibIOVE n)
+           , bench "UVector exp" $ whnfIO (fibIOUVE n)
            ]
          ]
        , bgroup "knapsack" [
@@ -217,8 +216,8 @@ main = defaultMainWith defaultConfig (return ()) [
            , bench "UArray" $ whnf (knapSTUA ws vs) w
           ]
         , bgroup "IO" [
-             bench "Array" $ knapIOA ws vs w
-           , bench "UArray" $ knapIOUA ws vs w
+             bench "Array" $ whnfIO (knapIOA ws vs w)
+           , bench "UArray" $ whnfIO (knapIOUA ws vs w)
           ]
          ]
        , bgroup "LCS" [
@@ -236,12 +235,12 @@ main = defaultMainWith defaultConfig (return ()) [
        ]
     where
       -- fib arg
-      n = 50000
+      n = 100000
       -- knapsac args
-      ws = [1..100]
-      vs = [1..100]
-      w = 400
+      ws = [1..200]
+      vs = [1..200]
+      w = 800
       -- LCS args
-      as = [1..200]
-      bs = [100,102..400]
+      as = [1..400]
+      bs = [100,102..800]
            
