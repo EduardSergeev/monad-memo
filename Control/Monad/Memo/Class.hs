@@ -35,6 +35,7 @@ module Control.Monad.Memo.Class
 
 ) where
 
+import Data.Tuple
 import Data.Function
 import Data.Maybe
 import Data.Either
@@ -80,7 +81,7 @@ memoln fl fk f k = do
 
 -- | Adapter for memoization of two-argument function
 for2 :: (((k1, k2) -> mv) -> (k1, k2) -> mv) -> (k1 -> k2 -> mv) -> k1 -> k2 -> mv
-for2 m f a b = m (\(a,b) -> f a b) (a,b)
+for2 m f = curry (m (uncurry f))
 
 -- | Adapter for memoization of three-argument function
 for3 :: (((k1, k2, k3) -> mv) -> (k1, k2, k3) -> mv) -> (k1 -> k2 -> k3 -> mv) -> k1 -> k2 -> k3 -> mv
