@@ -52,7 +52,7 @@ Build-type:         Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:      >=1.10
 
-Tested-with:        GHC==7.10.3, GHC==8.4.3
+Tested-with:        GHC==7.10.3, GHC==8.2.2, GHC==8.4.3
 
 Extra-source-files:
   CHANGES
