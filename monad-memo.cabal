@@ -55,11 +55,15 @@ Cabal-version:      >=1.10
 Tested-with:        GHC==7.10.3, GHC==8.2.2, GHC==8.4.3
 
 Extra-source-files:
-  CHANGES
+  CHANGES,
+  README.md,
+  example/*.hs,
+  example/Customisation/*.hs
+
 
 source-repository head
   type:             git
-  location:	    https://github.com/EduardSergeev/monad-memo.git
+  location:	        https://github.com/EduardSergeev/monad-memo.git
 
 source-repository this
   type:             git
