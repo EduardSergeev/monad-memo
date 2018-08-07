@@ -52,7 +52,11 @@ Build-type:         Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:      >=1.10
 
-Tested-with:        GHC==7.10.3, GHC==8.2.2, GHC==8.4.3
+Tested-with:
+  GHC==7.8.4,
+  GHC==7.10.3,
+  GHC==8.2.2,
+  GHC==8.4.3
 
 Extra-source-files:
   CHANGES,
@@ -80,6 +84,9 @@ Library
           array >= 0.3,
           vector >= 0.7,
           primitive >= 0.3
+  if impl(ghc < 7.10)
+    build-depends:
+          transformers-compat >= 0.3
   exposed-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
@@ -114,6 +121,9 @@ Test-Suite tests
           QuickCheck >= 2.0,
           test-framework-quickcheck2 >= 0.2.9,
           test-framework >= 0.3.3
+  if impl(ghc < 7.10)
+    build-depends:
+          transformers-compat >= 0.3
   other-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
@@ -146,6 +156,9 @@ Benchmark all
           vector >= 0.7,
           primitive >= 0.3,
           criterion >= 0.6
+  if impl(ghc < 7.10)
+    build-depends:
+          transformers-compat >= 0.3
   other-modules:
           Control.Monad.Memo,
           Control.Monad.Memo.Class,
