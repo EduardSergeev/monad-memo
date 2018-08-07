@@ -1,8 +1,8 @@
 language:
   haskell
 ghc:
+  - "7.4"
   - "7.10"
-  - "8.2"
   - "8.4"
 install:
   - cabal install --only-dependencies --enable-test --enable-benchmark
