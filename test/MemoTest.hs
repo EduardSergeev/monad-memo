@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 
 module MemoTest
@@ -15,7 +16,7 @@ import Control.Monad.ST
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
 import System.Random
-import Test.Framework (defaultMain, testGroup)
+import Test.Framework (testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 import Control.Monad.Memo
@@ -84,9 +85,9 @@ fibmr n = do
 runFibmr r = startEvalMemo . (`runReaderT`r) . fibmr
 
 
-prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Bool
+prop_ReaderEqv :: SmallInt Int -> SmallInt Int -> Property
 prop_ReaderEqv (SmallInt r) (SmallInt n) =
-    ((`runReader` r) . fibr  $ n) == (startEvalMemo . (`runReaderT` r) . fibmr $ n)
+    runFibr r n === runFibmr r n
 
 prop_ReaderSTEqv :: SmallInt Integer -> SmallInt Integer -> Bool
 prop_ReaderSTEqv (SmallInt r) (SmallInt n) =
@@ -152,7 +153,7 @@ fibs n = do
   s <- get
   f1 <- fibs (n-1)
   f2 <- fibs (n-2)
-  modify $ \s -> s+1
+  modify (+1)
   return (f1+f2+s)
 
 fibms 0 = return 0
@@ -161,7 +162,7 @@ fibms n = do
   s <- get
   f1 <- memo fibms (n-1)
   f2 <- memo fibms (n-2)
-  modify $ \s -> s+1
+  modify (+1)
   return (f1+f2+s)
 
 prop_StateEqv :: SmallInt Int -> SmallInt Int -> Bool
@@ -210,6 +211,7 @@ prop_MutualGEqv sx sy = g (x,y) == evalGm (x,y)
         x = toInt sx
         y = toInt sy
 
+
 -- Same as above but without explicit uncurring
 fm2 :: Int -> MemoFG (Int,String)
 fm2 0 = return (1,"+")
@@ -226,8 +228,8 @@ gm2 n m = do
   return $ fst fn - g
 
 evalAll2 = startEvalMemo . startEvalMemoT
-evalFm2 = evalAll . fm2
-evalGm2 n m = evalAll $ gm2 n m
+evalFm2 = evalAll2 . fm2
+evalGm2 n m = evalAll2 $ gm2 n m
 
 
 prop_Mutual2FEqv :: SmallInt Int -> Bool
@@ -254,9 +256,6 @@ fibSTA n = runST $ evalArrayMemo (fibm n) (0,n)
 
 fibSTUA :: Int -> Int
 fibSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
-
-fibSTUAD :: Int -> Double
-fibSTUAD n = runST $ evalUArrayMemo (fibm n) (0,n)
 
 fibIOA :: Integer -> IO Integer
 fibIOA n = evalArrayMemo (fibm n) (0,n)
@@ -292,19 +291,19 @@ prop_IOUAEqv (MedInt n) = monadicIO $ do
 -----------------
 
 fibSTV :: Int -> Integer
-fibSTV n = runST $ evalVectorMemo (fibm n) n
+fibSTV n = runST $ evalVectorMemo (fibm n) (n+1)
 
 prop_STVEqv :: MedInt Int -> Bool
 prop_STVEqv (MedInt n) = fibMap n == fibSTV n
 
 fibSTUV :: Int -> Int
-fibSTUV n = runST $ evalUVectorMemo (fibm n) n
+fibSTUV n = runST $ evalUVectorMemo (fibm n) (n+1)
 
 prop_STUVEqv :: MedInt Int -> Bool
 prop_STUVEqv (MedInt n) = fibMap n == fibSTUV n
 
 fibIOV :: Int -> IO Integer
-fibIOV n = evalVectorMemo (fibm n) n
+fibIOV n = evalVectorMemo (fibm n) (n+1)
 
 prop_IOVEqv :: MedInt Int -> Property
 prop_IOVEqv (MedInt n) = monadicIO $ do
@@ -312,7 +311,7 @@ prop_IOVEqv (MedInt n) = monadicIO $ do
                            assert $ r == fibMap n
 
 fibIOUV :: Int -> IO Int
-fibIOUV n = evalUVectorMemo (fibm n) n
+fibIOUV n = evalUVectorMemo (fibm n) (n+1)
 
 prop_IOUVEqv :: MedInt Int -> Property
 prop_IOUVEqv (MedInt n) = monadicIO $ do
@@ -355,19 +354,19 @@ prop_IOEUVEqv (MedInt n) = monadicIO $ do
 ------------------------
 
 fibSTUSV :: Int -> Integer
-fibSTUSV n = runST $ UV.unsafeEvalVectorMemo (fibm n) n
+fibSTUSV n = runST $ UV.unsafeEvalVectorMemo (fibm n) (n+1)
 
 prop_STUSVEqv :: MedInt Int -> Bool
 prop_STUSVEqv (MedInt n) = fibMap n == fibSTUSV n
 
 fibSTUSUV :: Int -> Int
-fibSTUSUV n = runST $ UV.unsafeEvalUVectorMemo (fibm n) n
+fibSTUSUV n = runST $ UV.unsafeEvalUVectorMemo (fibm n) (n+1)
 
 prop_STUSUVEqv :: MedInt Int -> Bool
 prop_STUSUVEqv (MedInt n) = fibMap n == fibSTUSUV n
 
 fibIOUSV :: Int -> IO Integer
-fibIOUSV n = UV.unsafeEvalVectorMemo (fibm n) n
+fibIOUSV n = UV.unsafeEvalVectorMemo (fibm n) (n+1)
 
 prop_IOUSVEqv :: MedInt Int -> Property
 prop_IOUSVEqv (MedInt n) = monadicIO $ do
@@ -375,7 +374,7 @@ prop_IOUSVEqv (MedInt n) = monadicIO $ do
                            assert $ r == fibMap n
 
 fibIOUSUV :: Int -> IO Int
-fibIOUSUV n = UV.unsafeEvalUVectorMemo (fibm n) n
+fibIOUSUV n = UV.unsafeEvalUVectorMemo (fibm n) (n+1)
 
 prop_IOUSUVEqv :: MedInt Int -> Property
 prop_IOUSUVEqv (MedInt n) = monadicIO $ do
@@ -383,39 +382,163 @@ prop_IOUSUVEqv (MedInt n) = monadicIO $ do
                            assert $ r == fibMap n
 
 
+-- | Hofstadter Female and Male sequences
+-- Mutually recursive functions
+
+hf :: Int -> Int
+hf n =
+  gof n
+  where
+    gof 0 = 1
+    gof i = i - ms !! (fs !! (i-1))
+    gom 0 = 0
+    gom i = i - fs !! (ms !! (i-1))
+    fs = [gof j | j <- [0..n]]
+    ms = [gom j | j <- [0..n]]
+
+-- hfm :: a -> t1 m a
+hfm n = gof n
+  where
+    gof 0 = return 1
+    gof i = do
+      fs <- memol0 gof (i-1)
+      ms <- memol1 gom fs
+      return (i - ms)
+    gom 0 = return 0
+    gom i = do
+      ms <- memol1 gom (i-1)
+      fs <- memol0 gof ms
+      return (i - fs)
+
+hfM :: Int -> Int
+hfM = startEvalMemo . startEvalMemoT . hfm
+
+prop_hfMEqv :: MedInt Int -> Property
+prop_hfMEqv (MedInt n) =
+  hfM n === hf n
+
+
+hfIOA :: Int -> IO Int
+hfIOA n = (`evalArrayMemo`(0,n)) . (`evalArrayMemo`(0,n)) . hfm $ n
+
+hfIOAU :: Int -> IO Int
+hfIOAU n = (`evalUArrayMemo`(0,n)) . (`evalUArrayMemo`(0,n)) . hfm $ n
+
+hfSTA :: Int -> Int
+hfSTA n = runST $ (`evalArrayMemo`(0,n)) . (`evalArrayMemo`(0,n)) . hfm $ n
+
+hfSTAU :: Int -> Int
+hfSTAU n = runST $ (`evalUArrayMemo`(0,n)) . (`evalUArrayMemo`(0,n)) . hfm $ n
+
+hfIOV :: Int -> IO Int
+hfIOV n = (`evalVectorMemo`(n+1)) . (`evalVectorMemo`(n+1)) . hfm $ n
+
+hfIOVU :: Int -> IO Int
+hfIOVU n = (`evalUVectorMemo`(n+1)) . (`evalUVectorMemo`(n+1)) . hfm $ n
+
+hfSTV :: Int -> Int
+hfSTV n = runST $ (`evalVectorMemo`(n+1)) . (`evalVectorMemo`(n+1)) . hfm $ n
+
+hfSTVU :: Int -> Int
+hfSTVU n = runST $ (`evalUVectorMemo`(n+1)) . (`evalUVectorMemo`(n+1)) . hfm $ n
+
+hfSTVE :: Int -> Int
+hfSTVE n = runST $ (EV.startEvalVectorMemo) . (EV.startEvalVectorMemo) . hfm $ n
+
+hfSTVUE :: Int -> Int
+hfSTVUE n = runST $ (EV.startEvalUVectorMemo) . (EV.startEvalUVectorMemo) . hfm $ n
+
+prop_hfIOEqv :: MedInt Int -> Property
+prop_hfIOEqv (MedInt n) = monadicIO $ do
+  hfIOAn <- run $ hfIOA n
+  hfIOAUn <- run $ hfIOAU n
+  hfIOVn <- run $ hfIOV n
+  hfIOVUn <- run $ hfIOVU n
+  return $
+    hfIOAn === hfn .&&.
+    hfIOAUn === hfn .&&.
+    hfIOVn === hfn .&&.
+    hfIOVUn === hfn
+  where
+    hfn = hf n
+
+prop_hfSTAEqv :: MedInt Int -> Property
+prop_hfSTAEqv (MedInt n) =
+  hfSTA n === hf n
+
+prop_hfSTAUEqv :: MedInt Int -> Property
+prop_hfSTAUEqv (MedInt n) =
+  hfSTAU n === hf n
+
+prop_hfSTVEqv :: MedInt Int -> Property
+prop_hfSTVEqv (MedInt n) =
+  hfSTV n === hf n
+
+prop_hfSTVUEqv :: MedInt Int -> Property
+prop_hfSTVUEqv (MedInt n) =
+  hfSTVU n === hf n
+
+prop_hfSTVEEqv :: MedInt Int -> Property
+prop_hfSTVEEqv (MedInt n) =
+  hfSTVE n === hf n
+
+prop_hfSTVUEEqv :: MedInt Int -> Property
+prop_hfSTVUEEqv (MedInt n) =
+  hfSTVUE n === hf n
+
 tests = [
-        testGroup "Transformers" [
-                       testProperty "ReaderEqv"         prop_ReaderEqv,
-                       testProperty "ReaderSTEqv"       prop_ReaderSTEqv,
-                       testProperty "WriterEqv"         prop_WriterEqv,
-                       testProperty "ContEqv"           prop_ContEqv,
-                       testProperty "ContSTUEqv"        prop_ContSTUEqv,
-                       testProperty "StateEqv"          prop_StateEqv
-                      ],
-        testGroup "Others" [
-                       testProperty "MutualFGEqv"       prop_MutualFEqv,
-                       testProperty "MutualCurryFGEqv"  prop_Mutual2FEqv
-                       ],
-        testGroup "Different memo-caches" [
-                       testGroup "ArrayCache" [
-                                      testProperty "Data.IntMap cache" prop_IntMapEqv,
-                                      testProperty "STArray cache"     prop_STAEqv,
-                                      testProperty "STUArray cache"    prop_STUAEqv,
-                                      testProperty "STUArray Double"   prop_STUADEqv,
-                                      testProperty "IOArray cache"     prop_IOAEqv,
-                                      testProperty "IOUArray cache"    prop_IOUAEqv
-                                     ],
-                       testGroup "VectorCache" [
-                                      testProperty "STVector cache"    prop_STVEqv,
-                                      testProperty "STUVector cache"   prop_STUVEqv,
-                                      testProperty "IOVector cache"    prop_IOVEqv,
-                                      testProperty "IOUVector cache"   prop_IOUVEqv
-                                     ],
-                       testGroup "Expandable VectorCache" [
-                                      testProperty "Exp STVector cache"    prop_STEVEqv,
-                                      testProperty "Exp STUVector cache"   prop_STEUVEqv,
-                                      testProperty "Exp IOVector cache"    prop_IOEVEqv,
-                                      testProperty "Exp IOUVector cache"   prop_IOEUVEqv
-                                     ]
-                      ]
+    testGroup "Transformers" [
+      testProperty "ReaderEqv"         prop_ReaderEqv,
+      testProperty "ReaderSTEqv"       prop_ReaderSTEqv,
+      testProperty "WriterEqv"         prop_WriterEqv,
+      testProperty "ContEqv"           prop_ContEqv,
+      testProperty "ContSTUEqv"        prop_ContSTUEqv,
+      testProperty "StateEqv"          prop_StateEqv
+    ],
+    testGroup "Others" [
+      testProperty "MutualFEqv"        prop_MutualFEqv,
+      testProperty "MutualGEqv"        prop_MutualGEqv,
+      testProperty "MutualCurryFEqv"   prop_Mutual2FEqv,
+      testProperty "MutualCurryGEqv"   prop_Mutual2GEqv,
+      testGroup "Hofstadter" [
+        testProperty "Map"             prop_hfMEqv,
+        testProperty "IO (Arr & Vec)"  prop_hfIOEqv,
+        testGroup "ST" [
+          testProperty "Vector"      prop_hfSTVEqv,
+          testProperty "UVector"     prop_hfSTVUEqv,
+          testProperty "Array"       prop_hfSTAEqv,
+          testProperty "UArray"      prop_hfSTAUEqv,
+          testProperty "Vector exp"  prop_hfSTVEEqv,
+          testProperty "UVector exp" prop_hfSTVUEEqv
+        ]
+      ]
+    ],
+    testGroup "Different memo-caches" [
+      testGroup "ArrayCache" [
+        testProperty "Data.IntMap cache" prop_IntMapEqv,
+        testProperty "STArray cache"     prop_STAEqv,
+        testProperty "STUArray cache"    prop_STUAEqv,
+        testProperty "STUArray Double"   prop_STUADEqv,
+        testProperty "IOArray cache"     prop_IOAEqv,
+        testProperty "IOUArray cache"    prop_IOUAEqv
+      ],
+      testGroup "VectorCache" [
+        testProperty "STVector cache"    prop_STVEqv,
+        testProperty "STUVector cache"   prop_STUVEqv,
+        testProperty "IOVector cache"    prop_IOVEqv,
+        testProperty "IOUVector cache"   prop_IOUVEqv
+      ],
+      testGroup "Expandable VectorCache" [
+        testProperty "STVector cache"    prop_STEVEqv,
+        testProperty "STUVector cache"   prop_STEUVEqv,
+        testProperty "IOVector cache"    prop_IOEVEqv,
+        testProperty "IOUVector cache"   prop_IOEUVEqv
+      ],
+      testGroup "Unsafe VectorCache" [
+        testProperty "STVector cache"    prop_STUSVEqv,
+        testProperty "STUVector cache"   prop_STUSUVEqv,
+        testProperty "IOVector cache"    prop_IOUSVEqv,
+        testProperty "IOUVector cache"   prop_IOUSUVEqv
+      ]
     ]
+  ]
