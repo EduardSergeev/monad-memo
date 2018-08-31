@@ -22,7 +22,7 @@ Description:
         >  n2 <- memo fibm (n-2)
         >  return (n1+n2)
         .
-     2) Use approprite /*eval*/ or /*run*/ function to evaluate resulting `MonadMemo` monad:
+     2) Use appropriate /*eval*/ or /*run*/ function to evaluate resulting `MonadMemo` monad:
         .
         >startEvalMemo (fibm 100)
         .
