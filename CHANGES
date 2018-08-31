@@ -22,3 +22,7 @@
 - Use `Except` instead of depricated `Error`
 - Remove support for `ListT` transformer since it is now depricated
 - Use standard `StateT` & `ReaderT` for `MonadCache` implementations
+
+0.5.1
+- Support multiple mutable caches in transformers stack
+  This allows Array/Vector-based caches to be used for mutually recursive function memoization

@@ -287,7 +287,7 @@ runFibmw n = startRunMemo . runWriterT $ fibmw n >> fibmw 1
 
 evalFibmwSTA n = runST $ evalArrayMemo (runWriterT (fibmw n)) (0,n)
 
-evalFibmwSTV n = runST $ evalVectorMemo (runWriterT (fibmw n)) n
+evalFibmwSTV n = runST $ evalVectorMemo (runWriterT (fibmw n)) (n+1)
 
 runFibmwST :: Integer -> ((Integer,String), Array Integer (Maybe (Integer,String)))
 runFibmwST n = runST $ do

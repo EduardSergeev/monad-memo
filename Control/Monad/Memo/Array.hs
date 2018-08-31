@@ -50,9 +50,7 @@ import Data.Function
 import Data.Maybe (Maybe(..))
 import Data.Array.ST
 import Data.Array.IO
-import Control.Applicative
 import Control.Monad
-import Control.Monad.Fix
 import Control.Monad.Trans.Class
 import Control.Monad.ST
 import System.IO
@@ -102,6 +100,9 @@ type family Array (m :: * -> *) :: * -> * -> *
 type instance Array (ST s) = STArray s
 type instance Array IO = IOArray
 
+type instance Array (ReaderCache c (ST s)) = STArray s
+type instance Array (ReaderCache c IO) = IOArray
+
 -- | Memoization monad based on mutable boxed array
 type ArrayCache k e m = Cache (Array m) k e m
 
@@ -141,6 +142,9 @@ type family UArray (m :: * -> *) :: * -> * -> *
 
 type instance UArray (ST s) = STUArray s
 type instance UArray IO = IOUArray
+
+type instance UArray (ReaderCache c (ST s)) = STUArray s
+type instance UArray (ReaderCache c IO) = IOUArray
 
 -- | Memoization monad based on mutable unboxed array
 type UArrayCache k e m = Cache (UArray m) k e m

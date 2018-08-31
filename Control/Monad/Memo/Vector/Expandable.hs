@@ -47,9 +47,7 @@ import Data.Maybe (Maybe(..))
 import Data.Vector.Generic.Mutable
 import qualified Data.Vector.Mutable as M
 import qualified Data.Vector.Unboxed.Mutable as UM
-import Control.Applicative
 import Control.Monad
-import Control.Monad.Fix
 import Control.Monad.Trans.Class
 import Control.Monad.Primitive
 
