@@ -1,5 +1,6 @@
 # monad-memo
 [![Build Status](https://travis-ci.org/EduardSergeev/monad-memo.svg?branch=master)](https://travis-ci.org/EduardSergeev/monad-memo)
+[![](https://img.shields.io/hackage/v/monad-memo.svg)](http://hackage.haskell.org/package/monad-memo)
 
 ## Purpose
 This package provides a convenient mechanism for adding memoization to Haskell monadic functions.
