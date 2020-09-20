@@ -1,0 +1,16 @@
+name: release
+
+on:
+  push:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Github release
+      run: |
+        echo "tag_name: ${{ github.ref }}"
+        echo "release_name: Release $(git log -1 --pretty="format:%s")"
+        echo "body: $(git log -1 --pretty="format:%b")"
+ 
