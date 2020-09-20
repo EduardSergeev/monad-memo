@@ -1,6 +1,6 @@
 Name:               monad-memo
 
-Version:            0.5.1
+Version:            0.5.2
 
 -- A short (one-line) description of the package.
 Synopsis:           Memoization monad transformer
@@ -69,12 +69,6 @@ source-repository head
   type:             git
   location:	        https://github.com/EduardSergeev/monad-memo.git
 
-source-repository this
-  type:             git
-  location:         https://github.com/EduardSergeev/monad-memo.git
-  tag:              0.5.0
-
-
 Library
   default-language: Haskell2010
   build-depends:
@@ -105,12 +99,13 @@ Library
           Data.MaybeLike,
           Data.MaybeLike.Instances
 
-Test-Suite tests
+Test-suite tests
   default-language: Haskell2010
   type:             exitcode-stdio-1.0
-  hs-source-dirs:   . test
+  hs-source-dirs:   test
   main-is:          Main.hs
   build-depends: 
+          monad-memo,
           base >= 3.0 && <= 5.0,
           transformers >= 0.2,
           containers >= 0.3,
@@ -125,30 +120,15 @@ Test-Suite tests
     build-depends:
           transformers-compat >= 0.3
   other-modules:
-          Control.Monad.Memo,
-          Control.Monad.Memo.Class,
-          Control.Monad.Trans.Memo.ReaderCache,
-          Control.Monad.Trans.Memo.StateCache,
-          Control.Monad.Trans.Memo.State,
-          Control.Monad.Trans.Memo.Map,
-          Control.Monad.Memo.Array,
-          Control.Monad.Memo.Array.Instances,
-          Control.Monad.Memo.Vector,
-          Control.Monad.Memo.Vector.Expandable,
-          Control.Monad.Memo.Vector.Unsafe,
-          Control.Monad.Memo.Vector.Instances,
-          Data.MapLike,
-          Data.MapLike.Instances,
-          Data.MaybeLike,
-          Data.MaybeLike.Instances
-          MemoTest          
+          MemoTest      
 
 Benchmark all
   default-language: Haskell2010
   type:             exitcode-stdio-1.0
-  hs-source-dirs:   . benchmark
+  hs-source-dirs:   benchmark
   main-is:          Main.hs
   build-depends:
+          monad-memo,
           base >= 3.0 && <= 5.0,
           transformers >= 0.2,
           containers >= 0.3,
@@ -159,20 +139,3 @@ Benchmark all
   if impl(ghc < 7.10)
     build-depends:
           transformers-compat >= 0.3
-  other-modules:
-          Control.Monad.Memo,
-          Control.Monad.Memo.Class,
-          Control.Monad.Trans.Memo.ReaderCache,
-          Control.Monad.Trans.Memo.StateCache,
-          Control.Monad.Trans.Memo.State,
-          Control.Monad.Trans.Memo.Map,
-          Control.Monad.Memo.Array,
-          Control.Monad.Memo.Array.Instances,
-          Control.Monad.Memo.Vector,
-          Control.Monad.Memo.Vector.Expandable,
-          Control.Monad.Memo.Vector.Unsafe,
-          Control.Monad.Memo.Vector.Instances,
-          Data.MapLike,
-          Data.MapLike.Instances,
-          Data.MaybeLike,
-          Data.MaybeLike.Instances 
