@@ -1,0 +1,34 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+      - master  
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      STACK_YAML: stack-8.6.5.yaml
+      LCOV_PATH: ./lcov.info
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add $HOME/.local/bin to PATH
+      run: echo "::add-path::$HOME/.local/bin"
+
+    - name: Run tests with coverage
+      run: stack test --coverage
+
+    - name: Install hpc-lcov
+      run: stack install hpc-lcov
+
+    - name: Convert coverage results to LCOV format
+      run: hpc-lcov -o ${{ env.LCOV_PATH }}
+
+    - name: Upload coverage to Coverall 
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ${{ env.LCOV_PATH }}
