@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
       - master
@@ -51,3 +53,18 @@ jobs:
         path-to-lcov: ${{ env.LCOV_PATH }}
     - name: Run benchmarks
       run: stack bench
+
+  hackage-upload:
+    if: github.event_name == 'push' && startsWith(github.event.base_ref, 'refs/heads/master')
+    needs:
+      - stack-build
+      - cabal-build
+      - metrics
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Upload version to Hackage
+      env:
+        HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+        HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
+      run: stack upload .
