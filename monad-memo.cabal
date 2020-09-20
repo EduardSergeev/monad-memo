@@ -61,7 +61,7 @@ Tested-with:
   GHC==8.8.4
 
 Extra-source-files:
-  CHANGES,
+  CHANGELOG.md,
   README.md,
   example/*.hs,
   example/Customisation/*.hs

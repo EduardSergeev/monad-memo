@@ -5,5 +5,10 @@
     "dist*": true,
     ".stack-work": true,
     "**/cabal.project.local": true
+  },
+  "markdownlint.config": {
+    "MD022": false,
+    "MD024": false,
+    "MD032": false
   }
 }
