@@ -1,0 +1,14 @@
+name: branch
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  stack-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: stack build
+    - run: stack test
