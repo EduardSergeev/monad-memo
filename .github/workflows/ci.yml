@@ -56,3 +56,6 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: ${{ env.LCOV_PATH }}
+
+    - name: Run benchmarks
+      run: stack bench
