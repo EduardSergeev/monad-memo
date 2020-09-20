@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  stack-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build project
+      run: stack build
+
+    - name: Run tests
+      run: stack test
+
+  cabal-build:
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: cabal update
+    - run: cabal configure --enable-tests
+    - run: cabal build
+    - run: cabal test --test-show-details=always
+    - run: cabal haddock
+    - run: cabal check
+    - run: cabal sdist
+
+  metrics:
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      LCOV_PATH: ./lcov.info
+      # TODO: Remove this restriction once `stack test --coverage` is fixed in the next Stack release
+      STACK_YAML: stack-8.6.5.yaml
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add $HOME/.local/bin to PATH
+      run: echo "::add-path::$HOME/.local/bin"
+
+    - name: Run tests with coverage
+      run: stack test --coverage
+
+    - name: Install hpc-lcov
+      run: stack install hpc-lcov
+
+    - name: Convert coverage results to LCOV format
+      run: hpc-lcov -o ${{ env.LCOV_PATH }}
+
+    - name: Upload coverage to Coverall 
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ${{ env.LCOV_PATH }}
+
+    - name: Run benchmarks
+      run: stack bench
