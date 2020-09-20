@@ -2,3 +2,4 @@
 *#
 /dist*
 /.stack-work
+cabal.project.local

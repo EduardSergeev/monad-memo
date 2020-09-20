@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+    "**/*~": true,
+    "**/*#": true,
+    "dist*": true,
+    ".stack-work": true,
+    "**/cabal.project.local": true
+  }
+}

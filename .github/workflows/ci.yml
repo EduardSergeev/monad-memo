@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  stack-build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,9 +16,21 @@ jobs:
     - name: Run tests
       run: stack test
 
-  coverage:
-    if:
-      github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+  cabal-build:
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: cabal update
+    - run: cabal configure --enable-tests
+    - run: cabal build
+    - run: cabal test --test-show-details=always
+    - run: cabal haddock
+    - run: cabal check
+    - run: cabal sdist
+
+  metrics:
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       LCOV_PATH: ./lcov.info
