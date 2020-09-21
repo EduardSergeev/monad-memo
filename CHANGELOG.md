@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to the `monad-memo` project will be documented in this file
 
+## [0.5.3] - 2020-09-21
+### Fixed
+- `README.md` links
+### Removed
+- Travis-ci build configuration
+
 ## [0.5.2] - 2020-09-20
 ### Added
 - CI on Github actions with test coverage and Hackage upload

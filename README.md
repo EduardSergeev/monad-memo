@@ -1,8 +1,7 @@
 # monad-memo
-[![Travis Build Status](https://travis-ci.org/EduardSergeev/monad-memo.svg?branch=master)](https://travis-ci.org/EduardSergeev/monad-memo)
-[![Github Build Status](../../workflows/CI/badge.svg)](../../actions?query=workflow%3ACI+branch%3Amaster)
-[![Test Coverage](https://coveralls.io/repos/github/EduardSergeev/monad-memo/badge.svg?branch=master)](https://coveralls.io/github/EduardSergeev/monad-memo?branch=master)
-[![Hackage](https://img.shields.io/hackage/v/monad-memo.svg)](http://hackage.haskell.org/package/monad-memo)
+[![Build Status](https://github.com/EduardSergeev/monad-memo/workflows/master/badge.svg)](https://github.com/EduardSergeev/monad-memo/actions?query=workflow%3Amaster+branch%3Amaster)
+[![Test Coverage](https://coveralls.io/repos/github/EduardSergeev/monad-memo/badge.svg)](https://coveralls.io/github/EduardSergeev/monad-memo)
+[![Hackage](https://img.shields.io/hackage/v/monad-memo.svg)](https://hackage.haskell.org/package/monad-memo)
 
 ## Purpose
 This package provides a convenient mechanism for adding memoization to Haskell monadic functions.
