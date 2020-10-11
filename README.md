@@ -8,33 +8,36 @@ This package provides a convenient mechanism for adding memoization to Haskell m
 
 ## Memoization
 Memoization is a well known way to speed up function evaluation by caching previously calculated results and reusing them whenever a memoized function is needed to be evaluated with the same arguments again.
-It is usually associated with dynamic programming techiques. 
+It is usually associated with dynamic programming techiques.
 
 ## Overview
 Even though it is possible to manually add memoization to the code which would benefit from it, this ad-hoc approach has usual ad-hoc drawbacks: code pollution, bugs, resistance to changes.
-This package however encapsulates the underlying plumbing behind its simple monadic interface `MonadMemo` with a single combinator `memo` which, when applied to monadic function, turns it into "memoized" one. 
+This package however encapsulates the underlying plumbing behind its simple monadic interface `MonadMemo` with a single combinator `memo` which, when applied to monadic function, turns it into "memoized" one.
 
 The package offers various implementation of `MonadMemo` (which differs in terms of performance and requirements) and it is possible to choose/change the implementation without affecting the main function code.
 The range of supported implementations "out of box" is limited by the range of containers provided by the standard packages installed by [Haskel Platform](http://www.haskell.org/platform/):
 from default pure "fit them all" [Data.Map](http://hackage.haskell.org/packages/archive/containers/latest/doc/html/Data-Map.html) to very fast but limiting [vector](http://hackage.haskell.org/packages/archive/vector/latest/doc/html/Data-Vector-Generic-Mutable.html).
-It is also possible to plug-in a custom container (from a third-party library) and run existing monadic code with it. 
+It is also possible to plug-in a custom container (from a third-party library) and run existing monadic code with it.
 
 The default implementation of `MonadMemo` is also [monad transformer](http://en.wikibooks.org/wiki/Haskell/Monad_transformers) so it can be "mixed" with other monads.
-The package also provides the "memoized" versions of most standard monads found in [mtl](http://hackage.haskell.org/package/mtl). 
+The package also provides the "memoized" versions of most standard monads found in [mtl](http://hackage.haskell.org/package/mtl).
 
 ## Example of usage
 
 A clasic example of function which greatelly benefits from memoization is a recursively defined Fibonacci number function.
 A plain version of this function can be written in the following way:
+
 ```haskell
 fib :: Integer -> Integer
 fib 0 = 0
 fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 ```
+
 which is very inefficient (impractical for `n>40`).
 
 We can rewrite this definition as a monad:
+
 ```haskell
 fibm :: Monad m => Integer -> m Integer
 fibm 0 = return 0
@@ -44,13 +47,16 @@ fibm n = do
   f2 <- fibm (n-2)
   return (f1+f2)
 ```
+
 and even run it with `Identity` monad with identical inefficiency:
+
 ```haskell
 evalFibmId :: Integer -> Integer
 evalFibmId = runIdentity . fibm
 ```
 
 But all we need to do to make this function "computable" for reasonable argument is to add memoization for both recursive branches with `memo` combinator:
+
 ```haskell
 fibm :: (MonadMemo Integer Integer m) => Integer -> m Integer
 fibm 0 = return 0
@@ -60,11 +66,14 @@ fibm n = do
   f2 <- memo fibm (n-2)
   return (f1+f2)
 ```
+
 then, to evaluate it with default `Data.Map` based memoization cache we use the following "eval*" function:
+
 ```haskell
 evalFibm :: Integer -> Integer
 evalFibm = startEvalMemo . fibm
 ```
+
 Now the range of the arguments it can handle is limited only by `Integer` computation complexity and stack memory limit.
 
 ## More Examples
@@ -78,7 +87,7 @@ ackm :: (Num n, Ord n, MonadMemo (n, n) n m) => n -> n -> m n
 ackm 0 n = return (n+1)
 ackm m 0 = for2 memo ackm (m-1) 1
 ackm m n = do
-  n1 <- for2 memo ackm m (n-1)    -- 'for2' adapts 'memo' for 2-argument 'ackm' 
+  n1 <- for2 memo ackm m (n-1)    -- 'for2' adapts 'memo' for 2-argument 'ackm'
   for2 memo ackm (m-1) n1
 
 evalAckm :: (Num n, Ord n) => n -> n -> n
@@ -94,7 +103,7 @@ Given the following mutually recursive function definitions:
 -- 'f' depends on 'g'
 f :: Int -> (Int,String)
 f 0 = (1,"+")
-f (n+1)	=(g(n,fst(f n)),"-" ++ snd(f n))
+f (n+1) = (g(n,fst(f n)),"-" ++ snd(f n))
 
 -- 'g' depends on 'f'
 g :: (Int, Int) -> Int
@@ -114,7 +123,7 @@ fm (n+1) = do
   gn <- memo gm (n , fst fn)
   return (gn , "-" ++ snd fn)
 
-gm (0,m) = return (m+1) 
+gm (0,m) = return (m+1)
 gm (n+1,m) = do
   fn <- memo fm n
   gn <- memo gm (n,m)
@@ -123,10 +132,12 @@ gm (n+1,m) = do
 
 GHC complains:
 
+```text
     "Occurs check: cannot construct the infinite type: t = (t, v)
          Expected type: t
-   
+
          Inferred type: (t, v)"
+```
 
 which is understandable since we are trying to use the same cache for storing "key-value" pairs of the functions of different types (`fm :: Int -> m (Int,String)` and `gm :: (Int, Int) -> m Int`).
 Obviously, to cache both function we will need _two_ caches (even if the types of the functions were identical, it's not very good idea to share the same cache).
@@ -156,7 +167,7 @@ fm (n+1) = do
   return (gn , "-" ++ snd fn)
 
 gm :: (Int,Int) -> MemoFG Int
-gm (0,m) = return (m+1) 
+gm (0,m) = return (m+1)
 gm (n+1,m) = do
   fn <- memol0 fm n
   gn <- memol1 gm (n,m)
@@ -185,7 +196,7 @@ fm2 n = do
 
 -- 2-argument function now
 gm2 :: Int -> Int -> MemoFG Int
-gm2 0 m = return (m+1) 
+gm2 0 m = return (m+1)
 gm2 n m = do
   fn <- memol0 fm2 (n-1)
   gn <- for2 memol1 gm2 (n-1) m   -- 'for2' adapts 'memol1' for 2-argument gm2
@@ -193,7 +204,7 @@ gm2 n m = do
 
 evalFm2 :: Int -> (Int, String)
 evalFm2 = evalAll . fm2
-    
+
 evalGm2 :: Int -> Int -> Int
 evalGm2 n m = evalAll $ gm2 n m
 ```
@@ -245,7 +256,7 @@ There is usually no need to do any modification to the memoized function itself.
 
 Unfortunatelly you cannot always use this `MonadCache` due to array's natural limitations:
 
-* The key must be an instance of [Ix](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Ix.html#t:Ix) typeclass   
+* The key must be an instance of [Ix](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Ix.html#t:Ix) typeclass
 * The bounds of the array must be known (and specified) beforehand and array cannot be resized
 * Array is a continious space of values, so if the key distribution is wide and sparse the memory will be wasted (or array may not even fit into memory)
 
@@ -267,6 +278,7 @@ can be run using `ST` array of `Integers` with the following function:
 evalFibmSTA :: Integer -> Integer
 evalFibmSTA n = runST $ evalArrayMemo (fibm n) (0,n)
 ```
+
 here the `(0,n)` argument defines the bounds of cache array.
 Is it equally easy to use unboxed version of the array, but `Integer` cannot be unboxed (it isn't primitive type), so lets just use `Double` for our function result:
 
@@ -274,7 +286,7 @@ Is it equally easy to use unboxed version of the array, but `Integer` cannot be 
 evalFibmSTUA :: Integer -> Double
 evalFibmSTUA n = runST $ evalUArrayMemo (fibm n) (0,n)
 ```
- 
+
 Instead of `ST` you can use `IO` monad:
 
 ```haskell
@@ -291,6 +303,7 @@ For even better performance use [VectorCache](http://hackage.haskell.org/package
 Note however that this `MonadCache` is even more limiting that `ArrayCache` since `vector` supports only `Int` as an index.
 
 The usage is very similar to `ArrayCache`, but instead of range we need to specify the length of the vector:
+
 ```haskell
 evalFibmSTV :: Int -> Integer
 evalFibmSTV n = runST $ evalVectorMemo (fibm n) n
@@ -298,7 +311,9 @@ evalFibmSTV n = runST $ evalVectorMemo (fibm n) n
 evalFibmIOUV :: Int -> IO Double
 evalFibmIOUV n = evalUVectorMemo (fibm n) n
 ```
+
 Use "Expandable" version to avoid specifying length parameter:
+
 ```haskell
 import qualified Control.Monad.Memo.Vector.Expandable as VE
 
@@ -306,24 +321,24 @@ evalFibmSTVE :: Int -> Integer
 evalFibmSTVE n = runST $ VE.startEvalVectorMemo (fibm n)
 ```
 
-## Performance of different `MonadCache`'s:
+## Performance of different `MonadCache`'s
 
 The difference in performance for different `MonadCache`'s with Fibonacci function is demonstrated by [this criterion test](benchmark/Main.hs).
 The test runs memoized Fibonacci function using the following caches:
- * default Map-based
- * State-based with Data.IntMap
- * array and unboxed array based (Array and UArray)
- * vector, unsafe vector and expandable vector (both boxed and unboxed vectors)
+* default Map-based
+* State-based with Data.IntMap
+* array and unboxed array based (Array and UArray)
+* vector, unsafe vector and expandable vector (both boxed and unboxed vectors)
 
 ![summary](benchmark/results/fib_memo.png)
 
 Full report can be [found here](http://htmlpreview.github.com/?https://github.com/EduardSergeev/monad-memo/blob/dev/benchmark/results/fib_memo.html).
 
-
 ## Custom mutable cache
 
 It is also possible to use a mutable container as a `MonadCache` not defined here.
 For example if we wish to use mutable hash-table from [hashtables package](http://hackage.haskell.org/package/hashtables) we can do so with the following code:
+
 ```haskell
 {-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
 
@@ -347,7 +362,7 @@ instance (Eq k, Hashable k) => MonadMemo k v (Cache s k v (ST s)) where
               v <- f k
               lift $ H.insert (toTable c) k v
               return v
-            else return (fromJust e) 
+            else return (fromJust e)
 
 {-# INLINE fib1 #-}
 fibm 0 = return 0
@@ -362,7 +377,6 @@ evalFib n = runST $ do
    c <- H.new
    evalReaderCache (fibm n) (Container c)
 ```
-
 
 ## References
 * http://www.haskell.org/haskellwiki/Memoization
