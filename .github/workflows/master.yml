@@ -33,6 +33,7 @@ jobs:
   metrics:
     runs-on: ubuntu-latest
     env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       LCOV_PATH: ./lcov.info
       # TODO: Remove this restriction once `stack test --coverage` is fixed in the next Stack release
       STACK_YAML: stack-8.6.5.yaml
