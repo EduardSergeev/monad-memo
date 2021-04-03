@@ -2,6 +2,7 @@
 [![Build Status](https://github.com/EduardSergeev/monad-memo/workflows/master/badge.svg)](https://github.com/EduardSergeev/monad-memo/actions?query=workflow%3Amaster+branch%3Amaster)
 [![Test Coverage](https://coveralls.io/repos/github/EduardSergeev/monad-memo/badge.svg)](https://coveralls.io/github/EduardSergeev/monad-memo)
 [![Hackage](https://img.shields.io/hackage/v/monad-memo.svg)](https://hackage.haskell.org/package/monad-memo)
+[![Hackage](https://img.shields.io/badge/dynamic/xml?color=success&label=Downloads&query=substring-before%28%2F%2F%2A%5B%40id%3D%22properties%22%5D%2Ftable%2Ftbody%2Ftr%2Fth%5Btext%28%29%5Bnormalize-space%28.%29%3D%27Downloads%27%5D%5D%2F..%2Ftd%2C%20%27%20%27%29&url=https%3A%2F%2Fhackage.haskell.org%2Fpackage%2Fmonad-memo)](https://hackage.haskell.org/package/monad-memo)
 
 ## Purpose
 This package provides a convenient mechanism for adding memoization to Haskell monadic functions.
@@ -379,7 +380,7 @@ evalFib n = runST $ do
 ```
 
 ## References
-* http://www.haskell.org/haskellwiki/Memoization
+* [Memoization Haskell wiki](http://www.haskell.org/haskellwiki/Memoization)
 * ["Monadic Memoization Mixins" by Daniel Brown and William R. Cook](http://www.cs.utexas.edu/~wcook/Drafts/2006/MemoMixins.pdf)
 * [data-memocombinators](http://hackage.haskell.org/packages/archive/data-memocombinators/latest/doc/html/Data-MemoCombinators.html)
 * ["Fun with Type Functions" by Oleg Kiselyov, Ken Shan, and Simon Peyton Jones (see 3.1 - "Type-directed memoization")](http://research.microsoft.com/~simonpj/papers/assoc-types/fun-with-type-funs/typefun.pdf)
