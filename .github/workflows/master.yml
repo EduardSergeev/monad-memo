@@ -35,8 +35,6 @@ jobs:
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       LCOV_PATH: ./lcov.info
-      # TODO: Remove this restriction once `stack test --coverage` is fixed in the next Stack release
-      STACK_YAML: stack-8.6.5.yaml
     steps:
     - uses: actions/checkout@v2
     - name: Add $HOME/.local/bin to PATH
