@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the `monad-memo` project will be documented in this file
 
+## [0.5.4] - 2022-01-04
+### Fixed
+- Fix GHC 9.2.1 build
+
 ## [0.5.3] - 2020-09-21
 ### Fixed
 - `README.md` links
