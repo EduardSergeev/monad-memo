@@ -12,12 +12,12 @@ Default instances for `VectorMemo` and `UVectorMemo`
 -}
 
 {-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses,
-  UndecidableInstances, FlexibleInstances, TypeFamilies #-}
+  UndecidableInstances, FlexibleInstances, TypeFamilies, FlexibleContexts #-}
 
 module Control.Monad.Memo.Vector.Instances
 (
 
-  
+
 ) where
 
 import Data.Maybe
