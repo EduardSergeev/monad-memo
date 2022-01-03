@@ -12,7 +12,7 @@ Default instances of `ArrayMemo` and `UArrayMemo`
 -}
 
 {-# LANGUAGE NoImplicitPrelude, MultiParamTypeClasses,
-  UndecidableInstances, FlexibleInstances #-}
+  UndecidableInstances, FlexibleInstances, FlexibleContexts #-}
 
 module Control.Monad.Memo.Array.Instances
 (
@@ -27,5 +27,5 @@ import Control.Monad.Memo.Array
 
 
 instance MaybeLike (Maybe v) v => ArrayMemo v (Maybe v)
-        
+
 instance MaybeLike v v => UArrayMemo v v
