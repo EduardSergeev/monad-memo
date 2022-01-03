@@ -54,7 +54,7 @@ jobs:
       run: stack bench
 
   hackage-upload:
-    if: github.event_name == 'push' && startsWith(github.event.base_ref, 'refs/heads/master')
+    if: github.event_name == 'push' && startsWith(github.event.base_ref, 'refs/heads/master') && startsWith(github.event.ref, 'refs/tags')
     needs:
       - stack-build
       - cabal-build
